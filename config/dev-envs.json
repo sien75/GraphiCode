@@ -1,0 +1,26 @@
+{
+  "devEnvs": [
+    {
+      "name": "Bun",
+      "runtimeEnvs": [
+        {
+          "name": "Bun",
+          "supportedLanguages": [
+            "JavaScript",
+            "TypeScript",
+            "JSX",
+            "TSX",
+            "NaturalLanguage"
+          ]
+        },
+        {
+          "name": "Browser",
+          "supportedLanguages": [
+            "JavaScript",
+            "NaturalLanguage"
+          ]
+        }
+      ]
+    }
+  ]
+}

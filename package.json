@@ -1,12 +1,37 @@
 {
   "name": "graphicode",
+  "version": "0.0.1",
+  "description": "A tool to read GraphiCode project information",
   "module": "index.ts",
   "type": "module",
-  "private": true,
+  "bin": {
+    "graphicode": "./index.ts"
+  },
+  "files": [
+    "index.ts",
+    "types.ts",
+    "agents/",
+    "config/",
+    "flow-parser/",
+    "flow-render/",
+    "tools/",
+    "view/"
+  ],
+  "keywords": [
+    "graphicode"
+  ],
+  "author": "sien75",
+  "license": "MIT",
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.1.12",
+    "@langchain/langgraph": "^1.0.15",
+    "langchain": "^1.2.7",
+    "zod": "^4.3.5"
   }
 }
