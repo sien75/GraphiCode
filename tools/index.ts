@@ -1,4 +1,5 @@
 import { ToolNode } from "@langchain/langgraph/prebuilt";
+import type { AgentState } from "../types";
 
 // App tools
 import { readAppInfoTool } from "./app/read-app-info";
@@ -44,5 +45,16 @@ export const tools = [
   writeFlowByIdTool,
 ];
 
-// Unified tool node for LangGraph
-export const toolNode = new ToolNode(tools);
+// Create internal ToolNode
+const internalToolNode = new ToolNode(tools);
+
+// Custom tool node wrapper that appends messages instead of replacing
+export async function toolNode(state: AgentState) {
+  // Call the internal ToolNode
+  const result = await internalToolNode.invoke(state);
+  
+  // Return with messages appended, not replaced
+  return {
+    messages: [...state.messages, ...result.messages],
+  };
+}

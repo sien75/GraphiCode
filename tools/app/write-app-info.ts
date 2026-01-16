@@ -4,13 +4,25 @@ import { join } from "path";
 import type { AppInfo } from "types";
 
 const writeAppInfoSchema = z.object({
-  path: z.string().describe("The relative or absolute path to the project directory"),
-  appInfo: z.object({
-    devEnv: z.string().optional().describe("Development environment (e.g., Bun)"),
-    runtimeEnv: z.string().optional().describe("Runtime environment (e.g., Bun, Browser)"),
-    readme: z.string().optional().describe("README.md content"),
-    projectConfig: z.any().optional().describe("Project configuration (e.g., package.json content)"),
-  }).describe("Partial AppInfo to update"),
+  path: z.string().optional().describe("Project path (will use current path if not provided)"),
+  appInfo: z
+    .object({
+      appName: z.string().optional().describe("Application name"),
+      devEnv: z
+        .string()
+        .optional()
+        .describe("Development environment (e.g., Bun)"),
+      runtimeEnv: z
+        .string()
+        .optional()
+        .describe("Runtime environment (e.g., Bun, Browser)"),
+      readme: z.string().optional().describe("README.md content"),
+      projectConfig: z
+        .any()
+        .optional()
+        .describe("Project configuration (e.g., package.json content)"),
+    })
+    .describe("Partial AppInfo to update"),
 });
 
 // Core function that can be called directly
@@ -20,10 +32,14 @@ export async function writeAppInfo(
 ): Promise<{ success: boolean; updatedFiles: string[] }> {
   const updatedFiles: string[] = [];
 
-  // Update graphig.json if devEnv or runtimeEnv is provided
-  if (appInfo.devEnv !== undefined || appInfo.runtimeEnv !== undefined) {
+  // Update graphig.json if appName, devEnv or runtimeEnv is provided
+  if (
+    appInfo.appName !== undefined ||
+    appInfo.devEnv !== undefined ||
+    appInfo.runtimeEnv !== undefined
+  ) {
     const graphigJsonPath = join(path, "graphig.json");
-    
+
     // Read existing config
     let existingConfig: any = {};
     try {
@@ -35,8 +51,11 @@ export async function writeAppInfo(
     // Merge with new values
     const updatedConfig = {
       ...existingConfig,
+      ...(appInfo.appName !== undefined && { appName: appInfo.appName }),
       ...(appInfo.devEnv !== undefined && { devEnv: appInfo.devEnv }),
-      ...(appInfo.runtimeEnv !== undefined && { runtimeEnv: appInfo.runtimeEnv }),
+      ...(appInfo.runtimeEnv !== undefined && {
+        runtimeEnv: appInfo.runtimeEnv,
+      }),
     };
 
     // Write back
@@ -63,7 +82,10 @@ export async function writeAppInfo(
   if (appInfo.projectConfig !== undefined) {
     const packageJsonPath = join(path, "package.json");
     try {
-      await Bun.write(packageJsonPath, JSON.stringify(appInfo.projectConfig, null, 2));
+      await Bun.write(
+        packageJsonPath,
+        JSON.stringify(appInfo.projectConfig, null, 2)
+      );
       updatedFiles.push("package.json");
     } catch (error) {
       throw new Error(`Failed to write package.json: ${error}`);
@@ -79,11 +101,15 @@ export async function writeAppInfo(
 // LangChain tool wrapper
 export const writeAppInfoTool = tool(
   async (input) => {
+    if (!input.path) {
+      throw new Error("Path is required");
+    }
     return await writeAppInfo(input.path, input.appInfo);
   },
   {
     name: "write_app_info",
-    description: "Write/update application information including graphig.json, README.md, and project config. Only updates the files for which data is provided.",
+    description:
+      "Write/update application information including graphig.json, README.md, and project config. Only updates the files for which data is provided.",
     schema: writeAppInfoSchema,
   }
 );

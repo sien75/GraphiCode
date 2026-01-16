@@ -1,10 +1,10 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
-import type { AppInfo } from "types";
+import type { AppInfo, Graphig } from "types";
 
 const readAppInfoSchema = z.object({
-  path: z.string().describe("The relative or absolute path to the project directory"),
+  workspace_path: z.string().describe("The path to the workspace"),
 });
 
 // Core function that can be called directly
@@ -13,11 +13,11 @@ export async function readAppInfo(path: string): Promise<AppInfo> {
   const readmePath = join(path, "README.md");
 
   // read graphig.json
-  let graphigConfig: { devEnv: string; runtimeEnv: string } | null = null;
+  let graphigConfig: Graphig | null = null;
   try {
     graphigConfig = await Bun.file(graphigJsonPath).json();
   } catch (error) {
-    throw new Error(`Failed to read graphig.json: ${error}`);
+    console.error(`Failed to read graphig.json: ${error}`);
   }
 
   // read README.md
@@ -26,7 +26,7 @@ export async function readAppInfo(path: string): Promise<AppInfo> {
     const readmeFile = Bun.file(readmePath);
     readme = await readmeFile.text();
   } catch (error) {
-    throw new Error(`Failed to read README.md: ${error}`);
+    console.error(`Failed to read README.md: ${error}`);
   }
 
   // read project config based on devEnv
@@ -41,12 +41,12 @@ export async function readAppInfo(path: string): Promise<AppInfo> {
         break;
     }
   } catch (error) {
-    throw new Error(`Failed to read project config: ${error}`);
+    console.error(`Failed to read project config: ${error}`);
   }
 
   // organize return value by AppInfo type
   const appInfo: AppInfo = {
-    path: path,
+    appName: graphigConfig?.appName || "Unknown",
     devEnv: graphigConfig?.devEnv || "Bun",
     runtimeEnv: graphigConfig?.runtimeEnv || "Bun",
     readme: readme || "",
@@ -59,11 +59,14 @@ export async function readAppInfo(path: string): Promise<AppInfo> {
 // LangChain tool wrapper
 export const readAppInfoTool = tool(
   async (input) => {
-    return await readAppInfo(input.path);
+    if (!input.workspace_path) {
+      throw new Error("Path is required");
+    }
+    return await readAppInfo(input.workspace_path);
   },
   {
     name: "read_app_info",
-    description: "Read application information including graphig.json, README.md, and project config from a given path",
+    description: "Read application information including graphig.json, README.md, and project config from the specified path",
     schema: readAppInfoSchema,
   }
 );
