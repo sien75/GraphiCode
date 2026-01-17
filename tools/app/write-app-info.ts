@@ -4,23 +4,23 @@ import { join } from "path";
 import type { AppInfo } from "types";
 
 const writeAppInfoSchema = z.object({
-  path: z.string().optional().describe("Project path (will use current path if not provided)"),
+  workspacePath: z.string().describe("The workspace path"),
   appInfo: z
     .object({
       appName: z.string().optional().describe("Application name"),
       devEnv: z
         .string()
         .optional()
-        .describe("Development environment (e.g., Bun)"),
+        .describe("Development environment. Currently supported: 'Bun'"),
       runtimeEnv: z
         .string()
         .optional()
-        .describe("Runtime environment (e.g., Bun, Browser)"),
+        .describe("Runtime environment. Currently supported: 'Bun', 'Browser'"),
       readme: z.string().optional().describe("README.md content"),
       projectConfig: z
         .any()
         .optional()
-        .describe("Project configuration (e.g., package.json content)"),
+        .describe("Project configuration file content. For Bun projects: this is the package.json object."),
     })
     .describe("Partial AppInfo to update"),
 });
@@ -101,10 +101,10 @@ export async function writeAppInfo(
 // LangChain tool wrapper
 export const writeAppInfoTool = tool(
   async (input) => {
-    if (!input.path) {
+    if (!input.workspacePath) {
       throw new Error("Path is required");
     }
-    return await writeAppInfo(input.path, input.appInfo);
+    return await writeAppInfo(input.workspacePath, input.appInfo);
   },
   {
     name: "write_app_info",

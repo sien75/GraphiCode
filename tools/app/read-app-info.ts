@@ -4,7 +4,7 @@ import { join } from "path";
 import type { AppInfo, Graphig } from "types";
 
 const readAppInfoSchema = z.object({
-  workspace_path: z.string().describe("The path to the workspace"),
+  workspacePath: z.string().describe("The path to the workspace"),
 });
 
 // Core function that can be called directly
@@ -59,14 +59,14 @@ export async function readAppInfo(path: string): Promise<AppInfo> {
 // LangChain tool wrapper
 export const readAppInfoTool = tool(
   async (input) => {
-    if (!input.workspace_path) {
+    if (!input.workspacePath) {
       throw new Error("Path is required");
     }
-    return await readAppInfo(input.workspace_path);
+    return await readAppInfo(input.workspacePath);
   },
   {
     name: "read_app_info",
-    description: "Read application information including graphig.json, README.md, and project config from the specified path",
+    description: "Read application information including graphig.json, README.md, and project config from the specified path. For Bun projects, projectConfig is the package.json.",
     schema: readAppInfoSchema,
   }
 );

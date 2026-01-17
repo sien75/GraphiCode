@@ -3,7 +3,8 @@ import { tools } from "../tools/index";
 import type { AgentState } from "../types";
 
 // System prompt
-const SYSTEM_PROMPT = `You are a consulting assistant. You need to call the appropriate tools to answer user questions or follow instructions.
+const SYSTEM_PROMPT = `
+You are a consulting assistant. You need to call the appropriate tools to answer user questions or follow instructions.
 Remember use user's language to answer questions.
 `;
 
@@ -21,7 +22,7 @@ export async function callTestNode(state: AgentState) {
   const messages = state.messages || [];
 
   // current path information
-  const currentPathInfo = `IMPORTANT: When calling tools that require a path parameter, always use workspace_path: "${state.path}". This is the current working directory.`;
+  const currentPathInfo = `IMPORTANT: When calling tools that require a path parameter, always use workspacePath: "${state.path}". This is the current working directory.`;
 
   // add system prompt if no messages yet
   const firstPrompt = {
