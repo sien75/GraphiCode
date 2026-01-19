@@ -52,7 +52,7 @@ export type TypesConfig = {
 export type TypeConfig = {
   description: string;
   typeDetail: {
-    [typeName: string]: string;
+    [typeId: string]: string;
   };
 };
 
@@ -72,7 +72,30 @@ export type StatesConfig = {
 export type StateConfig = {
   description: string;
   stateDetail: {
-    [stateName: string]: {
+    [stateId: string]: {
+      runtimeEnv: RuntimeEnv;
+      content: string;
+    };
+  };
+};
+
+/**
+ * AlgorithmsConfig and AlgorithmConfig are the configuration of the algorithms.
+ * It contains the description and algorithms with runtime environment information.
+ */
+
+export type AlgorithmsConfig = {
+  description: string;
+  algorithms: {
+    id: string;
+    runtimeEnv: RuntimeEnv;
+  }[];
+};
+
+export type AlgorithmConfig = {
+  description: string;
+  algorithmDetail: {
+    [algorithmId: string]: {
       runtimeEnv: RuntimeEnv;
       content: string;
     };

@@ -43,7 +43,7 @@ export async function writeStateById(
   newConfig?: {
     description: string;
     stateDetail: {
-      [stateName: string]: {
+      [stateId: string]: {
         runtimeEnv: RuntimeEnv;
         content: string;
       };
