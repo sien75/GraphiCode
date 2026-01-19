@@ -3,25 +3,25 @@ import { z } from "zod";
 import { join } from "path";
 import type { AlgorithmConfig } from "types";
 
-const readAlgorithmByIdSchema = z.object({
+const readTestByIdSchema = z.object({
   workspacePath: z.string().describe("The path to the workspace"),
-  id: z.string().describe("The algorithm ID (folder name) to read"),
+  id: z.string().describe("The algorithm ID (folder name) to read test for"),
 });
 
 // Core function that can be called directly
-export async function readAlgorithmById(
+export async function readTestById(
   path: string,
   id: string
 ): Promise<{
   config: AlgorithmConfig;
-  algorithmFile: string;
+  testFile: string;
 }> {
   const algorithmFolderPath = join(path, "src", "algorithms", id);
   const configPath = join(algorithmFolderPath, "config.json");
-  const algorithmFilePath = join(algorithmFolderPath, "index.ts");
+  const testFilePath = join(algorithmFolderPath, "index.test.ts");
 
   let config = null;
-  let algorithmFile = "";
+  let testFile = "";
 
   // Read config.json
   try {
@@ -30,22 +30,22 @@ export async function readAlgorithmById(
     console.error(`Failed to read config.json for algorithm ${id}: ${error}`);
   }
 
-  // Read index.ts
+  // Read index.test.ts
   try {
-    const file = Bun.file(algorithmFilePath);
-    algorithmFile = await file.text();
+    const file = Bun.file(testFilePath);
+    testFile = await file.text();
   } catch (error) {
-    console.error(`Failed to read index.ts for algorithm ${id}: ${error}`);
+    console.error(`Failed to read index.test.ts for algorithm ${id}: ${error}`);
   }
 
   return {
     config,
-    algorithmFile,
+    testFile,
   };
 }
 
 // LangChain tool wrapper
-export const readAlgorithmByIdTool = tool(
+export const readTestByIdTool = tool(
   async (input) => {
     if (!input.workspacePath) {
       throw new Error("workspacePath is required");
@@ -53,13 +53,13 @@ export const readAlgorithmByIdTool = tool(
     if (!input.id) {
       throw new Error("id is required");
     }
-    return await readAlgorithmById(input.workspacePath, input.id);
+    return await readTestById(input.workspacePath, input.id);
   },
   {
-    name: "read_algorithm_by_id",
+    name: "read_test_by_id",
     description:
-      "Read a specific algorithm by its ID (folder name). Returns both config.json and index.ts content from src/algorithms/{id}/ folder.",
-    schema: readAlgorithmByIdSchema,
+      "Read the test file (index.test.ts) and config.json for a specific algorithm by its ID (folder name) from src/algorithms/{id}/ folder. Returns both config (with runtimeEnv info) and test file content.",
+    schema: readTestByIdSchema,
   }
 );
 

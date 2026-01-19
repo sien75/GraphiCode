@@ -9,7 +9,9 @@ import { writeAppInfoTool } from "./app/write-app-info";
 import { readAllAlgorithmsTool } from "./algorithms/read-all-algorithms";
 import { readAlgorithmByIdTool } from "./algorithms/read-algorithm-by-id";
 import { writeAlgorithmByIdTool } from "./algorithms/write-algorithm-by-id";
-import { testAlgorithmByIdTool } from "./algorithms/test-algorithm-by-id";
+import { readTestByIdTool } from "./algorithms/read-test-by-id";
+import { writeTestByIdTool } from "./algorithms/write-test-by-id";
+import { executeTestByIdTool } from "./algorithms/execute-test-by-id";
 
 // Type tools
 import { readAllTypesTool } from "./types/read-all-types";
@@ -33,7 +35,9 @@ export const tools = [
   readAllAlgorithmsTool,
   readAlgorithmByIdTool,
   writeAlgorithmByIdTool,
-  testAlgorithmByIdTool,
+  readTestByIdTool,
+  writeTestByIdTool,
+  executeTestByIdTool,
   readAllTypesTool,
   readTypeByIdTool,
   writeTypeByIdTool,

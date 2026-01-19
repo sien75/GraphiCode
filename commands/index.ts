@@ -2,9 +2,9 @@
 import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
 import { HumanMessage } from "@langchain/core/messages";
 import type { BaseMessage } from "@langchain/core/messages";
-import type { AgentState } from "./types";
-import { callTestNode } from "./llm-nodes/test";
-import { toolNode } from "./tools/index";
+import type { AgentState } from "../types";
+import { callTestNode } from "../llm-nodes/test";
+import { toolNode } from "../tools/index";
 import * as readline from "readline";
 
 /* read path from command line arguments */

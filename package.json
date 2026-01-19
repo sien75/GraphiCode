@@ -5,7 +5,9 @@
   "module": "index.ts",
   "type": "module",
   "bin": {
-    "graphicode": "./index.ts"
+    "graphicode": "./commands/index.ts",
+    "playwright-install": "bunx playwright install",
+    "playwright-test": "./commands/playwright-test.ts"
   },
   "files": [
     "index.ts",
@@ -32,6 +34,7 @@
     "@langchain/core": "^1.1.12",
     "@langchain/langgraph": "^1.0.15",
     "@langchain/openai": "^1.2.2",
+    "@playwright/test": "^1.57.0",
     "langchain": "^1.2.7",
     "zod": "^4.3.5"
   }

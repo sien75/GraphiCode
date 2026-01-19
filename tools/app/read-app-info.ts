@@ -2,6 +2,7 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
 import type { AppInfo, Graphig } from "types";
+import mainConfig from "config/main.json";
 
 const readAppInfoSchema = z.object({
   workspacePath: z.string().describe("The path to the workspace"),
@@ -29,16 +30,17 @@ export async function readAppInfo(path: string): Promise<AppInfo> {
     console.error(`Failed to read README.md: ${error}`);
   }
 
-  // read project config based on devEnv
+  // read project config based on devEnv from config/main.json
   let projectConfig: any = null;
   try {
-    switch (graphigConfig?.devEnv) {
-      case "Bun":
-        const packageJsonPath = join(path, "package.json");
-        projectConfig = await Bun.file(packageJsonPath).json();
-        break;
-      default:
-        break;
+    // Find the devEnv configuration
+    const devEnvConfig = mainConfig.devEnvs?.find(
+      (env: any) => env.name === graphigConfig?.devEnv
+    );
+    
+    if (devEnvConfig?.projectConfig) {
+      const projectConfigPath = join(path, devEnvConfig.projectConfig);
+      projectConfig = await Bun.file(projectConfigPath).json();
     }
   } catch (error) {
     console.error(`Failed to read project config: ${error}`);
@@ -66,7 +68,7 @@ export const readAppInfoTool = tool(
   },
   {
     name: "read_app_info",
-    description: "Read application information including graphig.json, README.md, and project config from the specified path. For Bun projects, projectConfig is the package.json.",
+    description: "Read application information including graphig.json, README.md, and project config from the specified path.",
     schema: readAppInfoSchema,
   }
 );

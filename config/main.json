@@ -1,0 +1,52 @@
+{
+  "devEnvs": [
+    {
+      "name": "Bun",
+      "projectConfig": "package.json",
+      "runtimeEnvs": [
+        {
+          "name": "Bun",
+          "supportedLanguages": [
+            "JavaScript",
+            "TypeScript",
+            "JSX",
+            "TSX",
+            "NaturalLanguage"
+          ],
+          "testMethods": [
+            {
+              "name": "BunTestRunner",
+              "command": "bun test {testFile}"
+            }
+          ],
+          "files": {
+            "main": "index.ts",
+            "test": "index.test.ts"
+          }
+        },
+        {
+          "name": "Browser",
+          "supportedLanguages": [
+            "JavaScript",
+            "JSX",
+            "NaturalLanguage"
+          ],
+          "testMethods": [
+            {
+              "name": "BunTestRunner",
+              "command": "bun test {testFile}"
+            },
+            {
+              "name": "Playwright",
+              "command": "bunx playwright-test {testFile}"
+            }
+          ],
+          "files": {
+            "main": "index.ts",
+            "test": "index.test.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

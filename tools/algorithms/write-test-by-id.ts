@@ -4,9 +4,9 @@ import { join } from "path";
 import { mkdir } from "fs/promises";
 import type { RuntimeEnv } from "types";
 
-const writeAlgorithmByIdSchema = z.object({
+const writeTestByIdSchema = z.object({
   workspacePath: z.string().describe("The path to the workspace"),
-  id: z.string().describe("The algorithm ID (folder name) to write"),
+  id: z.string().describe("The algorithm ID (folder name) to write test for"),
   newConfig: z
     .object({
       description: z.string().describe("Description of the algorithm folder"),
@@ -28,16 +28,16 @@ const writeAlgorithmByIdSchema = z.object({
     .describe(
       "New config.json content. If undefined or null, config.json will not be modified"
     ),
-  newAlgorithmFile: z
+  newTestFile: z
     .string()
     .optional()
     .describe(
-      "New index.ts file content. If undefined or null, index.ts will not be modified"
+      "New index.test.ts file content. If undefined or null, index.test.ts will not be modified"
     ),
 });
 
 // Core function that can be called directly
-export async function writeAlgorithmById(
+export async function writeTestById(
   path: string,
   id: string,
   newConfig?: {
@@ -49,15 +49,15 @@ export async function writeAlgorithmById(
       };
     };
   } | null,
-  newAlgorithmFile?: string | null
+  newTestFile?: string | null
 ): Promise<{ success: boolean; updatedFiles: string[] }> {
   const algorithmFolderPath = join(path, "src", "algorithms", id);
   const configPath = join(algorithmFolderPath, "config.json");
-  const algorithmFilePath = join(algorithmFolderPath, "index.ts");
+  const testFilePath = join(algorithmFolderPath, "index.test.ts");
   const updatedFiles: string[] = [];
 
   // Ensure the algorithm folder exists if we need to write anything
-  if (newConfig || newAlgorithmFile) {
+  if (newConfig || newTestFile) {
     try {
       await mkdir(algorithmFolderPath, { recursive: true });
     } catch (error) {
@@ -76,14 +76,14 @@ export async function writeAlgorithmById(
     }
   }
 
-  // Write index.ts only if newAlgorithmFile is provided
-  if (newAlgorithmFile !== undefined && newAlgorithmFile !== null) {
+  // Write index.test.ts only if newTestFile is provided
+  if (newTestFile !== undefined && newTestFile !== null) {
     try {
-      await Bun.write(algorithmFilePath, newAlgorithmFile);
-      updatedFiles.push(`src/algorithms/${id}/index.ts`);
+      await Bun.write(testFilePath, newTestFile);
+      updatedFiles.push(`src/algorithms/${id}/index.test.ts`);
     } catch (error) {
       console.error(
-        `Failed to write index.ts for algorithm ${id}: ${error}`
+        `Failed to write index.test.ts for algorithm ${id}: ${error}`
       );
     }
   }
@@ -95,7 +95,7 @@ export async function writeAlgorithmById(
 }
 
 // LangChain tool wrapper
-export const writeAlgorithmByIdTool = tool(
+export const writeTestByIdTool = tool(
   async (input) => {
     if (!input.workspacePath) {
       throw new Error("workspacePath is required");
@@ -103,18 +103,17 @@ export const writeAlgorithmByIdTool = tool(
     if (!input.id) {
       throw new Error("id is required");
     }
-    return await writeAlgorithmById(
+    return await writeTestById(
       input.workspacePath,
       input.id,
       input.newConfig,
-      input.newAlgorithmFile
+      input.newTestFile
     );
   },
   {
-    name: "write_algorithm_by_id",
+    name: "write_test_by_id",
     description:
-      "Write or update a specific algorithm by its ID. Creates the folder if it doesn't exist. Only updates the files for which data is provided (newConfig for config.json, newAlgorithmFile for index.ts).",
-    schema: writeAlgorithmByIdSchema,
+      "Write or update the test file (index.test.ts) and/or config.json for a specific algorithm by its ID. Creates the folder if it doesn't exist. Only updates the files for which data is provided (newConfig for config.json, newTestFile for index.test.ts).",
+    schema: writeTestByIdSchema,
   }
 );
-
