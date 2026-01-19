@@ -101,3 +101,26 @@ export type AlgorithmConfig = {
     };
   };
 };
+
+/**
+ * FlowsConfig and FlowConfig are the configuration of the flows.
+ * It contains the description and flows with runtime environment information.
+ */
+
+export type FlowsConfig = {
+  description: string;
+  flows: {
+    id: string;
+    runtimeEnv: RuntimeEnv;
+  }[];
+};
+
+export type FlowConfig = {
+  description: string;
+  flowDetail: {
+    [flowId: string]: {
+      runtimeEnv: RuntimeEnv;
+      content: string;
+    };
+  };
+};
