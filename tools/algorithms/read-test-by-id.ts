@@ -2,7 +2,7 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
 import type { AlgorithmConfig } from "types";
-import { getTestFileName } from "./_utils";
+import { getTestFileName } from "../_utils";
 
 const readTestByIdSchema = z.object({
   devEnv: z.string().describe("Development environment (e.g., 'Bun')"),

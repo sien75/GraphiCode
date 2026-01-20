@@ -3,7 +3,7 @@ import { z } from "zod";
 import { join } from "path";
 import { mkdir } from "fs/promises";
 import type { RuntimeEnv } from "types";
-import { getMainFileName } from "./_utils";
+import { getMainFileName } from "../_utils";
 
 const writeAlgorithmByIdSchema = z.object({
   devEnv: z.string().describe("Development environment (e.g., 'Bun')"),

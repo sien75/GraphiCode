@@ -3,8 +3,13 @@ import { z } from "zod";
 import { join } from "path";
 import { mkdir } from "fs/promises";
 import type { RuntimeEnv } from "types";
+import { getMainFileName } from "../_utils";
 
 const writeStateByIdSchema = z.object({
+  devEnv: z.string().describe("Development environment (e.g., 'Bun')"),
+  runtimeEnv: z
+    .enum(["Bun", "Browser"])
+    .describe("Runtime environment for the state"),
   workspacePath: z.string().describe("The path to the workspace"),
   id: z.string().describe("The state ID (folder name) to write"),
   newConfig: z
@@ -32,13 +37,15 @@ const writeStateByIdSchema = z.object({
     .string()
     .optional()
     .describe(
-      "New state.ts file content. If undefined or null, state.ts will not be modified"
+      "New main file content. If undefined or null, main file will not be modified"
     ),
 });
 
 // Core function that can be called directly
 export async function writeStateById(
-  path: string,
+  devEnv: string,
+  runtimeEnv: string,
+  workspacePath: string,
   id: string,
   newConfig?: {
     description: string;
@@ -51,9 +58,13 @@ export async function writeStateById(
   } | null,
   newStateFile?: string | null
 ): Promise<{ success: boolean; updatedFiles: string[] }> {
-  const stateFolderPath = join(path, "src", "states", id);
+  const stateFolderPath = join(workspacePath, "src", "states", id);
   const configPath = join(stateFolderPath, "config.json");
-  const stateFilePath = join(stateFolderPath, "state.ts");
+
+  // Get the main file name from config
+  const mainFileName = getMainFileName(devEnv, runtimeEnv);
+  const mainFilePath = join(stateFolderPath, mainFileName);
+
   const updatedFiles: string[] = [];
 
   // Ensure the state folder exists if we need to write anything
@@ -76,13 +87,15 @@ export async function writeStateById(
     }
   }
 
-  // Write state.ts only if newStateFile is provided
+  // Write main file only if newStateFile is provided
   if (newStateFile !== undefined && newStateFile !== null) {
     try {
-      await Bun.write(stateFilePath, newStateFile);
-      updatedFiles.push(`src/states/${id}/state.ts`);
+      await Bun.write(mainFilePath, newStateFile);
+      updatedFiles.push(`src/states/${id}/${mainFileName}`);
     } catch (error) {
-      console.error(`Failed to write state.ts for state ${id}: ${error}`);
+      console.error(
+        `Failed to write ${mainFileName} for state ${id}: ${error}`
+      );
     }
   }
 
@@ -95,6 +108,12 @@ export async function writeStateById(
 // LangChain tool wrapper
 export const writeStateByIdTool = tool(
   async (input) => {
+    if (!input.devEnv) {
+      throw new Error("devEnv is required");
+    }
+    if (!input.runtimeEnv) {
+      throw new Error("runtimeEnv is required");
+    }
     if (!input.workspacePath) {
       throw new Error("workspacePath is required");
     }
@@ -102,6 +121,8 @@ export const writeStateByIdTool = tool(
       throw new Error("id is required");
     }
     return await writeStateById(
+      input.devEnv,
+      input.runtimeEnv,
       input.workspacePath,
       input.id,
       input.newConfig,
@@ -111,7 +132,7 @@ export const writeStateByIdTool = tool(
   {
     name: "write_state_by_id",
     description:
-      "Write or update a specific state by its ID. Creates the folder if it doesn't exist. Only updates the files for which data is provided (newConfig for config.json, newStateFile for state.ts).",
+      "Write or update a specific state by its ID. Creates the folder if it doesn't exist. Only updates the files for which data is provided (newConfig for config.json, newStateFile for main file). The main file name is determined from config/main.json based on devEnv and runtimeEnv.",
     schema: writeStateByIdSchema,
   }
 );

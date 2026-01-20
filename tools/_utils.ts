@@ -1,4 +1,4 @@
-import mainConfig from "../../config/main.json";
+import mainConfig from "../config/main.json";
 
 /**
  * Get the main file name for a given dev environment and runtime environment
