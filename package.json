@@ -36,6 +36,10 @@
     "@langchain/openai": "^1.2.2",
     "@playwright/test": "^1.57.0",
     "langchain": "^1.2.7",
+    "peggy": "^5.0.6",
     "zod": "^4.3.5"
+  },
+  "scripts": {
+    "generate-flow-parser": "peggy -o flow/parser.js flow/d2-subset.peggy --format es"
   }
 }
