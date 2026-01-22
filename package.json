@@ -5,7 +5,7 @@
   "module": "index.ts",
   "type": "module",
   "bin": {
-    "graphicode": "./commands/index.ts",
+    "graphicode": "./commands/graphicode.ts",
     "playwright-install": "bunx playwright install",
     "playwright-test": "./commands/playwright-test.ts"
   },
@@ -17,7 +17,8 @@
     "flow-parser/",
     "flow-render/",
     "tools/",
-    "view/"
+    "view/",
+    "nodes/"
   ],
   "keywords": [
     "graphicode"

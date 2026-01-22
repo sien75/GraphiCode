@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
-import { HumanMessage } from "@langchain/core/messages";
 import type { BaseMessage } from "@langchain/core/messages";
 import type { AgentState } from "../types";
-import { callTestNode } from "../llm-nodes/test";
+import { mainNode } from "../nodes/main";
+import { displayNode } from "../nodes/display";
+import { humanNode, rl } from "../nodes/human";
 import { toolNode } from "../tools/index";
-import * as readline from "readline";
 
 /* read path from command line arguments */
 
@@ -37,7 +37,7 @@ const AgentStateAnnotation = Annotation.Root({
 function shouldCallTools(state: any) {
   const messages = state.messages;
   if (!messages || messages.length === 0) {
-    return "end";
+    return "display";
   }
 
   const lastMessage = messages[messages.length - 1];
@@ -47,32 +47,31 @@ function shouldCallTools(state: any) {
     return "tools";
   }
 
-  // Otherwise, end (return to user)
-  return "end";
+  // Otherwise, go to display node to show messages
+  return "display";
 }
 
 const workflow = new StateGraph(AgentStateAnnotation);
 
 workflow
-  .addNode("testNode", callTestNode)
+  .addNode("mainNode", mainNode)
   .addNode("tools", toolNode)
-  .addEdge(START, "testNode")
-  .addConditionalEdges("testNode", shouldCallTools, {
+  .addNode("display", displayNode)
+  .addNode("human", humanNode)
+  .addEdge(START, "human")
+  .addEdge("human", "mainNode")
+  .addConditionalEdges("mainNode", shouldCallTools, {
     tools: "tools",
-    end: END,
+    display: "display",
   })
-  .addEdge("tools", "testNode");
+  .addEdge("tools", "mainNode")
+  .addEdge("display", "human");
 
 const app = workflow.compile();
 
 /* Command line interaction */
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-
-let currentState: AgentState = {
+const initialState: AgentState = {
   messages: [],
   types: [],
   states: [],
@@ -84,47 +83,11 @@ let currentState: AgentState = {
 console.log("\n=== GraphiCode Chat ===");
 console.log("Type your questions and press Enter\n");
 
-function prompt() {
-  rl.question("You: ", async (input) => {
-    if (!input.trim()) {
-      prompt();
-      return;
-    }
+/* Start the workflow - it will loop indefinitely */
 
-    /* Add user message */
-
-    const userMessage = new HumanMessage(input);
-    currentState.messages.push(userMessage);
-
-    /* Invoke the agent */
-
-    try {
-      const result = await app.invoke(currentState);
-      currentState = result;
-
-      /* Display tool results and assistant message */
-
-      const messages = result.messages;
-
-      // Check if second to last message is a tool message
-      if (messages.length >= 2) {
-        const secondLastMessage = messages[messages.length - 2];
-        if (secondLastMessage && secondLastMessage.type === "tool") {
-          console.log(`\n[Tool Result]: ${secondLastMessage.content}\n`);
-        }
-      }
-
-      // Display the latest assistant message
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage && lastMessage.content) {
-        console.log(`Assistant: ${lastMessage.content}\n`);
-      }
-    } catch (error) {
-      console.error(`\nError: ${error}\n`);
-    }
-
-    prompt();
-  });
+try {
+  await app.invoke(initialState);
+} catch (error) {
+  console.error(`\nError: ${error}\n`);
+  process.exit(1);
 }
-
-prompt();

@@ -9,7 +9,7 @@ Remember use user's language to answer questions.
 `;
 
 // Initialize OpenRouter model (using OpenAI interface)
-export const testAgent = new ChatOpenAI({
+export const mainAgent = new ChatOpenAI({
   modelName: "openai/gpt-4o-mini",
   apiKey: process.env.OPENAI_API_KEY,
   configuration: {
@@ -18,7 +18,7 @@ export const testAgent = new ChatOpenAI({
 }).bindTools(tools);
 
 // Agent node function
-export async function callTestNode(state: AgentState) {
+export async function mainNode(state: AgentState) {
   const messages = state.messages || [];
 
   // current path information
@@ -31,7 +31,7 @@ export async function callTestNode(state: AgentState) {
   };
   const invokeMessage = [firstPrompt, ...messages];
 
-  const response = await testAgent.invoke(invokeMessage);
+  const response = await mainAgent.invoke(invokeMessage);
 
   return {
     messages: [...messages, response],
