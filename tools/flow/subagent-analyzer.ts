@@ -62,18 +62,16 @@ export const subagentAnalyzerTool = tool(
 
     console.log('[subagent-analyzer] debug', initialState);
 
-    return 'Task completed.';
-
     // Run the graph
-    // const result = await analyzerGraph.invoke(initialState);
+    const result = await analyzerGraph.invoke(initialState);
 
-    // // Return the final message
-    // const finalMessage = result.messages[result.messages.length - 1];
-    // if (finalMessage && finalMessage.content) {
-    //   return "Task completed.\n" + finalMessage.content;
-    // }
+    // Return the final message
+    const finalMessage = result.messages[result.messages.length - 1];
+    if (finalMessage && finalMessage.content) {
+      return "Task completed.\n" + finalMessage.content;
+    }
 
-    // return "Task failed";
+    return "Task failed";
   },
   {
     name: "subagent-analyzer",

@@ -3,20 +3,20 @@ import { z } from "zod";
 import { StateGraph, END, START, Annotation } from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { BaseMessage, HumanMessage } from "@langchain/core/messages";
-import { flowNode } from "../../nodes/flow";
-import { readAllFlowsTool } from "./read-all-flows";
-import { readFlowByIdTool } from "./read-flow-by-id";
-import { writeFlowByIdTool } from "./write-flow-by-id";
+import { testNode } from "../../nodes/test";
+import { readTestByIdTool } from "./read-test-by-id";
+import { writeTestByIdTool } from "./write-test-by-id";
+import { executeTestByIdTool } from "./execute-test-by-id";
 
-// Flow tools for this subagent
-const flowTools = [
-  readAllFlowsTool,
-  readFlowByIdTool,
-  writeFlowByIdTool,
+// Test tools for this subagent
+const testTools = [
+  readTestByIdTool,
+  writeTestByIdTool,
+  executeTestByIdTool,
 ];
 
-// Define state annotation for the flow subagent
-const FlowStateAnnotation = Annotation.Root({
+// Define state annotation for the test subagent
+const TestStateAnnotation = Annotation.Root({
   messages: Annotation<BaseMessage[]>(),
   types: Annotation<any[]>(),
   states: Annotation<any[]>(),
@@ -27,8 +27,8 @@ const FlowStateAnnotation = Annotation.Root({
 });
 
 // Tools node - handles tool calls
-async function flowToolsNode(state: typeof FlowStateAnnotation.State) {
-  const toolNode = new ToolNode(flowTools);
+async function testToolsNode(state: typeof TestStateAnnotation.State) {
+  const toolNode = new ToolNode(testTools);
   const result = await toolNode.invoke(state);
 
   return {
@@ -37,7 +37,7 @@ async function flowToolsNode(state: typeof FlowStateAnnotation.State) {
 }
 
 // Router function - decides whether to continue to tools or end
-function shouldContinue(state: typeof FlowStateAnnotation.State): string {
+function shouldContinue(state: typeof TestStateAnnotation.State): string {
   const messages = state.messages;
   if (!messages || messages.length === 0) {
     return 'END';
@@ -55,26 +55,26 @@ function shouldContinue(state: typeof FlowStateAnnotation.State): string {
 }
 
 // Build the graph
-const flowWorkflow = new StateGraph(FlowStateAnnotation)
-  .addNode("flow", flowNode)
-  .addNode("tools", flowToolsNode)
-  .addEdge(START, "flow")
-  .addConditionalEdges("flow", shouldContinue, {
+const testWorkflow = new StateGraph(TestStateAnnotation)
+  .addNode("test", testNode)
+  .addNode("tools", testToolsNode)
+  .addEdge(START, "test")
+  .addConditionalEdges("test", shouldContinue, {
     tools: "tools",
     END: END,
   })
-  .addEdge("tools", "flow");
+  .addEdge("tools", "test");
 
 // Compile the graph
-const flowGraph = flowWorkflow.compile();
+const testGraph = testWorkflow.compile();
 
 // Create the subagent tool wrapper
-const subagentFlowSchema = z.object({
+const subagentTestSchema = z.object({
   workspacePath: z.string().describe("The workspace path"),
-  task: z.string().describe("The flow-related task to perform"),
+  task: z.string().describe("The test-related task to perform"),
 });
 
-export const subagentFlowTool = tool(
+export const subagentTestTool = tool(
   async (input) => {
     if (!input.workspacePath) {
       throw new Error("workspacePath is required");
@@ -94,12 +94,12 @@ export const subagentFlowTool = tool(
       appInfo: null,
     };
 
-    console.log('[subagent-flow] debug', initialState);
+    console.log('[subagent-test] debug', initialState);
 
     return 'Task completed.';
 
     // Run the graph
-    // const result = await flowGraph.invoke(initialState);
+    // const result = await testGraph.invoke(initialState);
 
     // // Return the final message
     // const finalMessage = result.messages[result.messages.length - 1];
@@ -110,9 +110,9 @@ export const subagentFlowTool = tool(
     // return "Task failed";
   },
   {
-    name: "subagent-flow",
+    name: "subagent-test",
     description:
-      "Delegate flow-related tasks to the flow subagent. Use this when you need to read or write D2 flow diagrams.",
-    schema: subagentFlowSchema,
+      "Delegate test-related tasks to the test subagent. Use this when you need to read, write, or execute tests.",
+    schema: subagentTestSchema,
   }
 );

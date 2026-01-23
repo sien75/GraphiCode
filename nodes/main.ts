@@ -7,8 +7,7 @@ import { subagentAppTool } from "../tools/app/subagent-app";
 import { subagentTypeTool } from "../tools/type/subagent-type";
 import { subagentStateTool } from "../tools/state/subagent-state";
 import { subagentAlgorithmTool } from "../tools/algorithm/subagent-algorithm";
-import { subagentFlowTool } from "../tools/flow/subagent-flow";
-import { subagentAnalyzerTool } from "../tools/analyzer/subagent-analyzer";
+import { subagentAnalyzerTool } from "../tools/flow/subagent-analyzer";
 
 // Prompt
 const SYSTEM_PROMPT = `
@@ -59,7 +58,7 @@ Remember to respond in the language the user uses.
 2. Through tools starting with "subagent", you can delegate corresponding category tasks to the corresponding subagent to execute.
 `;
 
-const mainToolsWithSubagents = [...mainTools, subagentAppTool, subagentTypeTool, subagentStateTool, subagentAlgorithmTool, subagentFlowTool, subagentAnalyzerTool];
+const mainToolsWithSubagents = [...mainTools, subagentAppTool, subagentTypeTool, subagentStateTool, subagentAlgorithmTool, subagentAnalyzerTool];
 
 export const mainAgent = new ChatOpenAI({
   modelName: "openai/gpt-4o-mini",
