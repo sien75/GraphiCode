@@ -1,63 +1,63 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
-import type { AlgorithmConfig } from "types";
+import type { StateConfig } from "types";
 import { getMainFileName } from "../_utils";
 
-const readAlgorithmByIdSchema = z.object({
+const readStateByIdSchema = z.object({
   devEnv: z.string().describe("Development environment (e.g., 'Bun')"),
   runtimeEnv: z
     .enum(["Bun", "Browser"])
-    .describe("Runtime environment for the algorithm"),
+    .describe("Runtime environment for the state"),
   workspacePath: z.string().describe("The path to the workspace"),
-  id: z.string().describe("The algorithm ID (folder name) to read"),
+  id: z.string().describe("The state ID (folder name) to read"),
 });
 
 // Core function that can be called directly
-export async function readAlgorithmById(
+export async function readStateById(
   devEnv: string,
   runtimeEnv: string,
   workspacePath: string,
   id: string
 ): Promise<{
-  config: AlgorithmConfig;
-  algorithmFile: string;
+  config: StateConfig;
+  stateFile: string;
 }> {
-  const algorithmFolderPath = join(workspacePath, "src", "algorithms", id);
-  const configPath = join(algorithmFolderPath, "config.json");
+  const stateFolderPath = join(workspacePath, "src", "states", id);
+  const configPath = join(stateFolderPath, "config.json");
 
   let config = null;
-  let algorithmFile = "";
+  let stateFile = "";
 
   // Read config.json
   try {
     config = await Bun.file(configPath).json();
   } catch (error) {
-    console.error(`Failed to read config.json for algorithm ${id}: ${error}`);
+    console.error(`Failed to read config.json for state ${id}: ${error}`);
   }
 
   // Get the main file name from config
   const mainFileName = getMainFileName(devEnv, runtimeEnv);
-  const mainFilePath = join(algorithmFolderPath, mainFileName);
+  const mainFilePath = join(stateFolderPath, mainFileName);
 
   // Read main file
   try {
     const file = Bun.file(mainFilePath);
-    algorithmFile = await file.text();
+    stateFile = await file.text();
   } catch (error) {
     console.error(
-      `Failed to read ${mainFileName} for algorithm ${id}: ${error}`
+      `Failed to read ${mainFileName} for state ${id}: ${error}`
     );
   }
 
   return {
     config,
-    algorithmFile,
+    stateFile,
   };
 }
 
 // LangChain tool wrapper
-export const readAlgorithmByIdTool = tool(
+export const readStateByIdTool = tool(
   async (input) => {
     if (!input.devEnv) {
       throw new Error("devEnv is required");
@@ -71,7 +71,7 @@ export const readAlgorithmByIdTool = tool(
     if (!input.id) {
       throw new Error("id is required");
     }
-    return await readAlgorithmById(
+    return await readStateById(
       input.devEnv,
       input.runtimeEnv,
       input.workspacePath,
@@ -79,10 +79,10 @@ export const readAlgorithmByIdTool = tool(
     );
   },
   {
-    name: "read_algorithm_by_id",
+    name: "read-state-by-id",
     description:
-      "Read a specific algorithm by its ID (folder name). Returns both config.json and main file content from src/algorithms/{id}/ folder. The main file name is determined from config/main.json based on devEnv and runtimeEnv.",
-    schema: readAlgorithmByIdSchema,
+      "Read a specific state by its ID (folder name). Returns both config.json and main file content from src/states/{id}/ folder. The main file name is determined from config/main.json based on devEnv and runtimeEnv.",
+    schema: readStateByIdSchema,
   }
 );
 

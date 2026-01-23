@@ -33,7 +33,7 @@ export const readAllFlowsTool = tool(
     return await readAllFlows(input.workspacePath);
   },
   {
-    name: "read_all_flows",
+    name: "read-all-flows",
     description:
       "Read all flows from src/flows/config.json. Returns the config.json content which includes description and flows array with id and runtimeEnv.",
     schema: readAllFlowsSchema,

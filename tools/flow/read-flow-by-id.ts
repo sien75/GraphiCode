@@ -56,7 +56,7 @@ export const readFlowByIdTool = tool(
     return await readFlowById(input.workspacePath, input.id);
   },
   {
-    name: "read_flow_by_id",
+    name: "read-flow-by-id",
     description:
       "Read a specific flow by its ID (folder name). Returns both config.json and flow.ts content from src/flows/{id}/ folder.",
     schema: readFlowByIdSchema,

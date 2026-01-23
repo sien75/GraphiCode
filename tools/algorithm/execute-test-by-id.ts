@@ -116,7 +116,7 @@ export const executeTestByIdTool = tool(
     );
   },
   {
-    name: "execute_test_by_id",
+    name: "execute-test-by-id",
     description:
       "Execute the test file for a specific algorithm by its ID. Uses the test command from config/main.json based on the runtime environment. The test file name is determined from config/main.json based on devEnv and runtimeEnv.",
     schema: executeTestByIdSchema,

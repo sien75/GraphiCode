@@ -11,7 +11,8 @@ export type AgentState = {
   states: any[];
   algorithms: any[];
   flows: any[];
-  path: string;
+  workspacePath: string;
+  appInfo: AppInfo | null;
 };
 
 /**

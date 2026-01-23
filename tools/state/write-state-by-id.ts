@@ -130,7 +130,7 @@ export const writeStateByIdTool = tool(
     );
   },
   {
-    name: "write_state_by_id",
+    name: "write-state-by-id",
     description:
       "Write or update a specific state by its ID. Creates the folder if it doesn't exist. Only updates the files for which data is provided (newConfig for config.json, newStateFile for main file). The main file name is determined from config/main.json based on devEnv and runtimeEnv.",
     schema: writeStateByIdSchema,

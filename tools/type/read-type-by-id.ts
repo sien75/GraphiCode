@@ -56,7 +56,7 @@ export const readTypeByIdTool = tool(
     return await readTypeById(input.workspacePath, input.id);
   },
   {
-    name: "read_type_by_id",
+    name: "read-type-by-id",
     description:
       "Read a specific type by its ID (folder name). Returns both config.json and index.ts content from src/types/{id}/ folder.",
     schema: readTypeByIdSchema,

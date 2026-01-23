@@ -107,7 +107,7 @@ export const writeAppInfoTool = tool(
     return await writeAppInfo(input.workspacePath, input.appInfo);
   },
   {
-    name: "write_app_info",
+    name: "write-app-info",
     description:
       "Write/update application information including graphig.json, README.md, and project config. Only updates the files for which data is provided.",
     schema: writeAppInfoSchema,

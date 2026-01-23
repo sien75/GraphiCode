@@ -93,7 +93,7 @@ export const writeTypeByIdTool = tool(
     );
   },
   {
-    name: "write_type_by_id",
+    name: "write-type-by-id",
     description:
       "Write or update a specific type by its ID. Creates the folder if it doesn't exist. Only updates the files for which data is provided (newConfig for config.json, newIndexTs for index.ts).",
     schema: writeTypeByIdSchema,

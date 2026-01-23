@@ -2,24 +2,26 @@
 import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
 import type { BaseMessage } from "@langchain/core/messages";
 import type { AgentState } from "../types";
-import { mainNode } from "../nodes/main";
+
+import { mainNode, mainToolsNode } from "../nodes/main";
 import { displayNode } from "../nodes/display";
-import { humanNode, rl } from "../nodes/human";
-import { toolNode } from "../tools/index";
+import { humanNode } from "../nodes/human";
 
-/* read path from command line arguments */
+import { readAppInfo } from "../tools/app/read-app-info";
 
-let path = Bun.argv[2];
+/* read workspacePath from command line arguments */
 
-/* if no path provided, show usage and exit */
+let workspacePath = Bun.argv[2];
 
-if (!path) {
-  console.error("Usage: graphicode <path>");
+/* if no workspace provided, show usage and exit */
+
+if (!workspacePath) {
+  console.error("Usage: graphicode <workspacePath>");
   console.error("Example: graphicode . or graphicode ./my-project");
   process.exit(1);
 }
 
-console.log(`Working directory: ${path}\n`);
+console.log(`Working directory: ${workspacePath}\n`);
 
 /* Step 1: Define AgentState using Annotation */
 
@@ -29,7 +31,8 @@ const AgentStateAnnotation = Annotation.Root({
   states: Annotation<any[]>(),
   algorithms: Annotation<any[]>(),
   flows: Annotation<any[]>(),
-  path: Annotation<string>(),
+  workspacePath: Annotation<string>(),
+  appInfo: Annotation<any>(),
 });
 
 /* Step 2: Initialize LangGraph workflow and build chain */
@@ -55,7 +58,7 @@ const workflow = new StateGraph(AgentStateAnnotation);
 
 workflow
   .addNode("mainNode", mainNode)
-  .addNode("tools", toolNode)
+  .addNode("tools", mainToolsNode)
   .addNode("display", displayNode)
   .addNode("human", humanNode)
   .addEdge(START, "human")
@@ -77,7 +80,8 @@ const initialState: AgentState = {
   states: [],
   algorithms: [],
   flows: [],
-  path: path,
+  workspacePath,
+  appInfo: await readAppInfo(workspacePath), // read app info from workspacePath at start
 };
 
 console.log("\n=== GraphiCode Chat ===");

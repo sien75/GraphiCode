@@ -1,5 +1,26 @@
 import mainConfig from "../config/main.json";
 
+function getFileName(
+  devEnv: string,
+  runtimeEnv: string,
+  fileType: string,
+  defaultFileName: string
+): string {
+  for (const devEnvConfig of mainConfig.devEnvs) {
+    if (devEnvConfig.name === devEnv) {
+      const runtimeEnvConfig = devEnvConfig.runtimeEnvs.find(
+        (env: any) => env.name === runtimeEnv
+      );
+      const files = runtimeEnvConfig?.files as any;
+      if (files?.[fileType]) {
+        return files[fileType];
+      }
+    }
+  }
+  // Default fallback
+  return defaultFileName;
+}
+
 /**
  * Get the main file name for a given dev environment and runtime environment
  * @param devEnv Development environment (e.g., 'Bun')
@@ -10,18 +31,7 @@ export function getMainFileName(
   devEnv: string,
   runtimeEnv: string
 ): string {
-  for (const devEnvConfig of mainConfig.devEnvs) {
-    if (devEnvConfig.name === devEnv) {
-      const runtimeEnvConfig = devEnvConfig.runtimeEnvs.find(
-        (env: any) => env.name === runtimeEnv
-      );
-      if (runtimeEnvConfig?.files?.main) {
-        return runtimeEnvConfig.files.main;
-      }
-    }
-  }
-  // Default fallback
-  return "index.ts";
+  return getFileName(devEnv, runtimeEnv, "main", "index.ts");
 }
 
 /**
@@ -34,16 +44,5 @@ export function getTestFileName(
   devEnv: string,
   runtimeEnv: string
 ): string {
-  for (const devEnvConfig of mainConfig.devEnvs) {
-    if (devEnvConfig.name === devEnv) {
-      const runtimeEnvConfig = devEnvConfig.runtimeEnvs.find(
-        (env: any) => env.name === runtimeEnv
-      );
-      if (runtimeEnvConfig?.files?.test) {
-        return runtimeEnvConfig.files.test;
-      }
-    }
-  }
-  // Default fallback
-  return "index.test.ts";
+  return getFileName(devEnv, runtimeEnv, "test", "index.test.ts");
 }

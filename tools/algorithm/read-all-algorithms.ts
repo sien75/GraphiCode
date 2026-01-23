@@ -35,7 +35,7 @@ export const readAllAlgorithmsTool = tool(
     return await readAllAlgorithms(input.workspacePath);
   },
   {
-    name: "read_all_algorithms",
+    name: "read-all-algorithms",
     description:
       "Read all algorithms from src/algorithms/config.json. Returns the config.json content which includes description and algorithms array with id and runtimeEnv.",
     schema: readAllAlgorithmsSchema,

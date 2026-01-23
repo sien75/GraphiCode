@@ -33,7 +33,7 @@ export const readAllStatesTool = tool(
     return await readAllStates(input.workspacePath);
   },
   {
-    name: "read_all_states",
+    name: "read-all-states",
     description:
       "Read all states from src/states/config.json. Returns the config.json content which includes description and states array with id and runtimeEnv.",
     schema: readAllStatesSchema,

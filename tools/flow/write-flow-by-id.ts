@@ -109,7 +109,7 @@ export const writeFlowByIdTool = tool(
     );
   },
   {
-    name: "write_flow_by_id",
+    name: "write-flow-by-id",
     description:
       "Write or update a specific flow by its ID. Creates the folder if it doesn't exist. Only updates the files for which data is provided (newConfig for config.json, newFlowFile for flow.ts).",
     schema: writeFlowByIdSchema,

@@ -77,7 +77,7 @@ export const readTestByIdTool = tool(
     );
   },
   {
-    name: "read_test_by_id",
+    name: "read-test-by-id",
     description:
       "Read the test file and config.json for a specific algorithm by its ID (folder name) from src/algorithms/{id}/ folder. Returns both config (with runtimeEnv info) and test file content. The test file name is determined from config/main.json based on devEnv and runtimeEnv.",
     schema: readTestByIdSchema,

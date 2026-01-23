@@ -33,7 +33,7 @@ export const readAllTypesTool = tool(
     return await readAllTypes(input.workspacePath);
   },
   {
-    name: "read_all_types",
+    name: "read-all-types",
     description:
       "Read all types from src/types/config.json. Returns the config.json content which includes description and types array.",
     schema: readAllTypesSchema,

@@ -3,15 +3,15 @@ import { z } from "zod";
 import { join } from "path";
 import { mkdir } from "fs/promises";
 import type { RuntimeEnv } from "types";
-import { getTestFileName } from "../_utils";
+import { getMainFileName } from "../_utils";
 
-const writeTestByIdSchema = z.object({
+const writeAlgorithmByIdSchema = z.object({
   devEnv: z.string().describe("Development environment (e.g., 'Bun')"),
   runtimeEnv: z
     .enum(["Bun", "Browser"])
     .describe("Runtime environment for the algorithm"),
   workspacePath: z.string().describe("The path to the workspace"),
-  id: z.string().describe("The algorithm ID (folder name) to write test for"),
+  id: z.string().describe("The algorithm ID (folder name) to write"),
   newConfig: z
     .object({
       description: z.string().describe("Description of the algorithm folder"),
@@ -33,16 +33,16 @@ const writeTestByIdSchema = z.object({
     .describe(
       "New config.json content. If undefined or null, config.json will not be modified"
     ),
-  newTestFile: z
+  newAlgorithmFile: z
     .string()
     .optional()
     .describe(
-      "New test file content. If undefined or null, test file will not be modified"
+      "New main file content. If undefined or null, main file will not be modified"
     ),
 });
 
 // Core function that can be called directly
-export async function writeTestById(
+export async function writeAlgorithmById(
   devEnv: string,
   runtimeEnv: string,
   workspacePath: string,
@@ -56,19 +56,19 @@ export async function writeTestById(
       };
     };
   } | null,
-  newTestFile?: string | null
+  newAlgorithmFile?: string | null
 ): Promise<{ success: boolean; updatedFiles: string[] }> {
   const algorithmFolderPath = join(workspacePath, "src", "algorithms", id);
   const configPath = join(algorithmFolderPath, "config.json");
 
-  // Get the test file name from config
-  const testFileName = getTestFileName(devEnv, runtimeEnv);
-  const testFilePath = join(algorithmFolderPath, testFileName);
+  // Get the main file name from config
+  const mainFileName = getMainFileName(devEnv, runtimeEnv);
+  const mainFilePath = join(algorithmFolderPath, mainFileName);
 
   const updatedFiles: string[] = [];
 
   // Ensure the algorithm folder exists if we need to write anything
-  if (newConfig || newTestFile) {
+  if (newConfig || newAlgorithmFile) {
     try {
       await mkdir(algorithmFolderPath, { recursive: true });
     } catch (error) {
@@ -87,14 +87,14 @@ export async function writeTestById(
     }
   }
 
-  // Write test file only if newTestFile is provided
-  if (newTestFile !== undefined && newTestFile !== null) {
+  // Write main file only if newAlgorithmFile is provided
+  if (newAlgorithmFile !== undefined && newAlgorithmFile !== null) {
     try {
-      await Bun.write(testFilePath, newTestFile);
-      updatedFiles.push(`src/algorithms/${id}/${testFileName}`);
+      await Bun.write(mainFilePath, newAlgorithmFile);
+      updatedFiles.push(`src/algorithms/${id}/${mainFileName}`);
     } catch (error) {
       console.error(
-        `Failed to write test file for algorithm ${id}: ${error}`
+        `Failed to write ${mainFileName} for algorithm ${id}: ${error}`
       );
     }
   }
@@ -106,7 +106,7 @@ export async function writeTestById(
 }
 
 // LangChain tool wrapper
-export const writeTestByIdTool = tool(
+export const writeAlgorithmByIdTool = tool(
   async (input) => {
     if (!input.devEnv) {
       throw new Error("devEnv is required");
@@ -120,19 +120,20 @@ export const writeTestByIdTool = tool(
     if (!input.id) {
       throw new Error("id is required");
     }
-    return await writeTestById(
+    return await writeAlgorithmById(
       input.devEnv,
       input.runtimeEnv,
       input.workspacePath,
       input.id,
       input.newConfig,
-      input.newTestFile
+      input.newAlgorithmFile
     );
   },
   {
-    name: "write_test_by_id",
+    name: "write-algorithm-by-id",
     description:
-      "Write or update the test file and/or config.json for a specific algorithm by its ID. Creates the folder if it doesn't exist. Only updates the files for which data is provided (newConfig for config.json, newTestFile for test file). The test file name is determined from config/main.json based on devEnv and runtimeEnv.",
-    schema: writeTestByIdSchema,
+      "Write or update a specific algorithm by its ID. Creates the folder if it doesn't exist. Only updates the files for which data is provided (newConfig for config.json, newAlgorithmFile for main file). The main file name is determined from config/main.json based on devEnv and runtimeEnv.",
+    schema: writeAlgorithmByIdSchema,
   }
 );
+

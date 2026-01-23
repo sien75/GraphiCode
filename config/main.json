@@ -10,8 +10,7 @@
             "JavaScript",
             "TypeScript",
             "JSX",
-            "TSX",
-            "NaturalLanguage"
+            "TSX"
           ],
           "testMethods": [
             {
@@ -28,8 +27,9 @@
           "name": "Browser",
           "supportedLanguages": [
             "JavaScript",
+            "TypeScript",
             "JSX",
-            "NaturalLanguage"
+            "TSX"
           ],
           "testMethods": [
             {

@@ -67,7 +67,7 @@ export const readAppInfoTool = tool(
     return await readAppInfo(input.workspacePath);
   },
   {
-    name: "read_app_info",
+    name: "read-app-info",
     description: "Read application information including graphig.json, README.md, and project config from the specified path.",
     schema: readAppInfoSchema,
   }
