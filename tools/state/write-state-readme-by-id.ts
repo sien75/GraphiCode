@@ -3,38 +3,36 @@ import { z } from "zod";
 import { join } from "path";
 import { mkdir } from "fs/promises";
 
-const writeFlowByIdSchema = z.object({
+const writeStateReadmeByIdSchema = z.object({
   workspacePath: z.string().describe("The path to the workspace"),
-  id: z.string().describe("The flow ID (folder name) to write"),
-  content: z
-    .string()
-    .describe("New index.d2 file content"),
+  id: z.string().describe("The state ID (folder name) to write"),
+  content: z.string().describe("New README.md file content"),
 });
 
 // Core function that can be called directly
-export async function writeFlowById(
+export async function writeStateReadmeById(
   path: string,
   id: string,
   content: string
 ): Promise<{ success: boolean; updatedFiles: string[] }> {
-  const flowFolderPath = join(path, "src", "flows", id);
-  const flowFilePath = join(flowFolderPath, "index.d2");
+  const stateFolderPath = join(path, "src", "states", id);
+  const readmePath = join(stateFolderPath, "README.md");
   const updatedFiles: string[] = [];
 
-  // Ensure the flow folder exists
+  // Ensure the state folder exists
   try {
-    await mkdir(flowFolderPath, { recursive: true });
+    await mkdir(stateFolderPath, { recursive: true });
   } catch (error) {
-    console.error(`Failed to create flow folder ${id}: ${error}`);
+    console.error(`Failed to create state folder ${id}: ${error}`);
     return { success: false, updatedFiles: [] };
   }
 
-  // Write index.d2
+  // Write README.md
   try {
-    await Bun.write(flowFilePath, content);
-    updatedFiles.push(`src/flows/${id}/index.d2`);
+    await Bun.write(readmePath, content);
+    updatedFiles.push(`src/states/${id}/README.md`);
   } catch (error) {
-    console.error(`Failed to write index.d2 for flow ${id}: ${error}`);
+    console.error(`Failed to write README.md for state ${id}: ${error}`);
     return { success: false, updatedFiles: [] };
   }
 
@@ -45,7 +43,7 @@ export async function writeFlowById(
 }
 
 // LangChain tool wrapper
-export const writeFlowByIdTool = tool(
+export const writeStateReadmeByIdTool = tool(
   async (input) => {
     if (!input.workspacePath) {
       throw new Error("workspacePath is required");
@@ -56,17 +54,16 @@ export const writeFlowByIdTool = tool(
     if (!input.content) {
       throw new Error("content is required");
     }
-    return await writeFlowById(
+    return await writeStateReadmeById(
       input.workspacePath,
       input.id,
       input.content
     );
   },
   {
-    name: "write-flow-by-id",
+    name: "write-state-readme-by-id",
     description:
-      "Write or update a specific flow by its ID. Creates the folder if it doesn't exist and writes the content to index.d2 file.",
-    schema: writeFlowByIdSchema,
+      "Write or update the README.md of a specific state by its ID. Creates the folder if it doesn't exist and writes the content to README.md file.",
+    schema: writeStateReadmeByIdSchema,
   }
 );
-

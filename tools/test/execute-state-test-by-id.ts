@@ -6,13 +6,13 @@ import mainConfig from "../../config/main.json";
 import type { RuntimeEnv } from "types";
 import { getTestFileName } from "../_utils";
 
-const executeTestByIdSchema = z.object({
+const executeStateTestByIdSchema = z.object({
   devEnv: z.string().describe("Development environment (e.g., 'Bun')"),
   runtimeEnv: z
     .enum(["Bun", "Browser"])
     .describe("Runtime environment to use for testing"),
   workspacePath: z.string().describe("The path to the workspace"),
-  id: z.string().describe("The algorithm ID (folder name) to execute test for"),
+  id: z.string().describe("The state ID (folder name) to execute test for"),
   testMethodName: z
     .string()
     .optional()
@@ -22,24 +22,24 @@ const executeTestByIdSchema = z.object({
 });
 
 // Core function that can be called directly
-export async function executeTestById(
+export async function executeStateTestById(
   devEnv: string,
   runtimeEnv: RuntimeEnv,
   workspacePath: string,
   id: string,
   testMethodName?: string
 ): Promise<{ success: boolean; output: string; exitCode: number }> {
-  const algorithmFolderPath = join(workspacePath, "src", "algorithms", id);
+  const stateFolderPath = join(workspacePath, "src", "states", id);
 
   // Get the test file name from config
   const testFileName = getTestFileName(devEnv, runtimeEnv);
-  const testFilePath = join(algorithmFolderPath, testFileName);
+  const testFilePath = join(stateFolderPath, testFileName);
 
   // Find the runtime environment configuration
   let testCommand: string | null = null;
 
-  for (const devEnv of mainConfig.devEnvs) {
-    const runtimeEnvConfig = devEnv.runtimeEnvs.find(
+  for (const devEnvConfig of mainConfig.devEnvs) {
+    const runtimeEnvConfig = devEnvConfig.runtimeEnvs.find(
       (env: any) => env.name === runtimeEnv
     );
 
@@ -93,7 +93,7 @@ export async function executeTestById(
 }
 
 // LangChain tool wrapper
-export const executeTestByIdTool = tool(
+export const executeStateTestByIdTool = tool(
   async (input) => {
     if (!input.devEnv) {
       throw new Error("devEnv is required");
@@ -107,7 +107,7 @@ export const executeTestByIdTool = tool(
     if (!input.id) {
       throw new Error("id is required");
     }
-    return await executeTestById(
+    return await executeStateTestById(
       input.devEnv,
       input.runtimeEnv,
       input.workspacePath,
@@ -116,9 +116,9 @@ export const executeTestByIdTool = tool(
     );
   },
   {
-    name: "execute-test-by-id",
+    name: "execute-state-test-by-id",
     description:
-      "Execute the test file for a specific algorithm by its ID. Uses the test command from config/main.json based on the runtime environment. The test file name is determined from config/main.json based on devEnv and runtimeEnv.",
-    schema: executeTestByIdSchema,
+      "Execute the test file for a specific state by its ID. Uses the test command from config/main.json based on the runtime environment. The test file name is determined from config/main.json based on devEnv and runtimeEnv.",
+    schema: executeStateTestByIdSchema,
   }
 );

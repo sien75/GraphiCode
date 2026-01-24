@@ -1,7 +1,6 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
-import type { FlowConfig } from "types";
 
 const readFlowByIdSchema = z.object({
   workspacePath: z.string().describe("The path to the workspace"),
@@ -12,36 +11,18 @@ const readFlowByIdSchema = z.object({
 export async function readFlowById(
   path: string,
   id: string
-): Promise<{
-  config: FlowConfig;
-  flowFile: string;
-}> {
+): Promise<string> {
   const flowFolderPath = join(path, "src", "flows", id);
-  const configPath = join(flowFolderPath, "config.json");
-  const flowFilePath = join(flowFolderPath, "flow.ts");
+  const flowFilePath = join(flowFolderPath, "index.d2");
 
-  let config = null;
-  let flowFile = "";
-
-  // Read config.json
-  try {
-    config = await Bun.file(configPath).json();
-  } catch (error) {
-    console.error(`Failed to read config.json for flow ${id}: ${error}`);
-  }
-
-  // Read flow.ts
+  // Read index.d2
   try {
     const file = Bun.file(flowFilePath);
-    flowFile = await file.text();
+    return await file.text();
   } catch (error) {
-    console.error(`Failed to read flow.ts for flow ${id}: ${error}`);
+    console.error(`Failed to read index.d2 for flow ${id}: ${error}`);
+    return "";
   }
-
-  return {
-    config,
-    flowFile,
-  };
 }
 
 // LangChain tool wrapper
@@ -58,7 +39,7 @@ export const readFlowByIdTool = tool(
   {
     name: "read-flow-by-id",
     description:
-      "Read a specific flow by its ID (folder name). Returns both config.json and flow.ts content from src/flows/{id}/ folder.",
+      "Read a specific flow by its ID (folder name). Returns the index.d2 content from src/flows/{id}/ folder.",
     schema: readFlowByIdSchema,
   }
 );

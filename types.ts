@@ -41,87 +41,52 @@ export type AppInfo = Graphig & {
 };
 
 /**
- * TypesConfig and TypeConfig are the configuration of the types.
- * It contains the description and types.
+ * TypeGraphig is the configuration file for types.
+ * It contains the declared language and types mapping.
  */
 
-export type TypesConfig = {
-  description: string;
-  types: string[];
-};
-
-export type TypeConfig = {
-  description: string;
-  typeDetail: {
-    [typeId: string]: string;
+export type TypeGraphig = {
+  declaredBy: "TypeScript";
+  types: {
+    [typeId: string]: string; // typeId is the type file name, value is the description
   };
 };
 
 /**
- * StatesConfig and StateConfig are the configuration of the states.
- * It contains the description and states with runtime environment information.
+ * StateGraphig is the configuration file for states.
+ * It contains the states mapping with runtime environment information.
  */
 
-export type StatesConfig = {
-  description: string;
+export type StateGraphig = {
   states: {
-    id: string;
-    runtimeEnv: RuntimeEnv;
-  }[];
-};
-
-export type StateConfig = {
-  description: string;
-  stateDetail: {
     [stateId: string]: {
+      description: string;
       runtimeEnv: RuntimeEnv;
-      content: string;
     };
   };
 };
 
 /**
- * AlgorithmsConfig and AlgorithmConfig are the configuration of the algorithms.
- * It contains the description and algorithms with runtime environment information.
+ * AlgorithmGraphig is the configuration file for algorithms.
+ * It contains the algorithms mapping with runtime environment information.
  */
 
-export type AlgorithmsConfig = {
-  description: string;
+export type AlgorithmGraphig = {
   algorithms: {
-    id: string;
-    runtimeEnv: RuntimeEnv;
-  }[];
-};
-
-export type AlgorithmConfig = {
-  description: string;
-  algorithmDetail: {
     [algorithmId: string]: {
+      description: string;
       runtimeEnv: RuntimeEnv;
-      content: string;
     };
   };
 };
 
 /**
- * FlowsConfig and FlowConfig are the configuration of the flows.
- * It contains the description and flows with runtime environment information.
+ * FlowGraphig is the configuration file for flows.
+ * It contains the flows mapping.
  */
 
-export type FlowsConfig = {
-  description: string;
+export type FlowGraphig = {
   flows: {
-    id: string;
-    runtimeEnv: RuntimeEnv;
-  }[];
-};
-
-export type FlowConfig = {
-  description: string;
-  flowDetail: {
-    [flowId: string]: {
-      runtimeEnv: RuntimeEnv;
-      content: string;
-    };
+    [flowId: string]: string; // flowId is the flow folder name, value is the description
   };
 };

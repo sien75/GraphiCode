@@ -1,25 +1,24 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
-import type { FlowsConfig } from "types";
+import type { FlowGraphig } from "types";
 
 const readAllFlowsSchema = z.object({
   workspacePath: z.string().describe("The path to the workspace"),
 });
 
 // Core function that can be called directly
-export async function readAllFlows(path: string): Promise<FlowsConfig> {
-  const configPath = join(path, "src", "flows", "config.json");
+export async function readAllFlows(path: string): Promise<FlowGraphig> {
+  const configPath = join(path, "src", "flows", "flow.graphig.json");
 
   try {
-    const config: FlowsConfig = await Bun.file(configPath).json();
+    const config: FlowGraphig = await Bun.file(configPath).json();
     return config;
   } catch (error) {
-    console.error(`Failed to read flows config.json: ${error}`);
+    console.error(`Failed to read flow.graphig.json: ${error}`);
     // Return default structure if file doesn't exist
     return {
-      description: "",
-      flows: [],
+      flows: {},
     };
   }
 }
@@ -35,7 +34,7 @@ export const readAllFlowsTool = tool(
   {
     name: "read-all-flows",
     description:
-      "Read all flows from src/flows/config.json. Returns the config.json content which includes description and flows array with id and runtimeEnv.",
+      "Read all flows from src/flows/flow.graphig.json. Returns the flow.graphig.json content which includes flows object mapping flowId to description.",
     schema: readAllFlowsSchema,
   }
 );

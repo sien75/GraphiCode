@@ -3,7 +3,7 @@ import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
 import type { BaseMessage } from "@langchain/core/messages";
 import type { AgentState } from "../types";
 
-import { mainNode, mainToolsNode } from "../nodes/main";
+import { mainNode, mainToolsNode } from "../nodes/architect";
 import { displayNode } from "../nodes/display";
 import { humanNode } from "../nodes/human";
 

@@ -1,25 +1,25 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
-import type { TypesConfig } from "types";
+import type { TypeGraphig } from "types";
 
 const readAllTypesSchema = z.object({
   workspacePath: z.string().describe("The path to the workspace"),
 });
 
 // Core function that can be called directly
-export async function readAllTypes(path: string): Promise<TypesConfig> {
-  const configPath = join(path, "src", "types", "config.json");
+export async function readAllTypes(path: string): Promise<TypeGraphig> {
+  const configPath = join(path, "src", "types", "type.graphig.json");
 
   try {
-    const config: TypesConfig = await Bun.file(configPath).json();
+    const config: TypeGraphig = await Bun.file(configPath).json();
     return config;
   } catch (error) {
-    console.error(`Failed to read types config.json: ${error}`);
+    console.error(`Failed to read type.graphig.json: ${error}`);
     // Return default structure if file doesn't exist
     return {
-      description: "",
-      types: [],
+      declaredBy: "TypeScript",
+      types: {},
     };
   }
 }
@@ -35,7 +35,7 @@ export const readAllTypesTool = tool(
   {
     name: "read-all-types",
     description:
-      "Read all types from src/types/config.json. Returns the config.json content which includes description and types array.",
+      "Read all types from src/types/type.graphig.json. Returns the type.graphig.json content which includes declaredBy and types object mapping typeId to description.",
     schema: readAllTypesSchema,
   }
 );

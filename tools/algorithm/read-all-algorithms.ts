@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
-import type { AlgorithmsConfig } from "types";
+import type { AlgorithmGraphig } from "types";
 
 const readAllAlgorithmsSchema = z.object({
   workspacePath: z.string().describe("The path to the workspace"),
@@ -10,18 +10,18 @@ const readAllAlgorithmsSchema = z.object({
 // Core function that can be called directly
 export async function readAllAlgorithms(
   path: string
-): Promise<AlgorithmsConfig> {
-  const configPath = join(path, "src", "algorithms", "config.json");
+): Promise<AlgorithmGraphig> {
+  const configPath = join(path, "src", "algorithms", "algorithm.graphig.json");
 
   try {
-    const config: AlgorithmsConfig = await Bun.file(configPath).json();
+    const config: AlgorithmGraphig = await Bun.file(configPath).json();
     return config;
   } catch (error) {
-    console.error(`Failed to read algorithms config.json: ${error}`);
+    console.error(`Failed to read algorithm.graphig.json: ${error}`);
     // Return default structure if file doesn't exist
     return {
-      description: "",
-      algorithms: [],
+      runtimeEnv: "Bun",
+      algorithms: {},
     };
   }
 }
@@ -37,7 +37,7 @@ export const readAllAlgorithmsTool = tool(
   {
     name: "read-all-algorithms",
     description:
-      "Read all algorithms from src/algorithms/config.json. Returns the config.json content which includes description and algorithms array with id and runtimeEnv.",
+      "Read all algorithms from src/algorithms/algorithm.graphig.json. Returns the algorithm.graphig.json content which includes runtimeEnv and algorithms object mapping algorithmId to description.",
     schema: readAllAlgorithmsSchema,
   }
 );
