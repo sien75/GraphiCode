@@ -2,7 +2,7 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
 import { mkdir } from "fs/promises";
-import { getTestFileName } from "../_utils";
+import { getTestFileName } from "../_get-file-name-of-env";
 
 const writeAlgorithmTestCodeByIdSchema = z.object({
   devEnv: z.string().describe("Development environment (e.g., 'Bun')"),

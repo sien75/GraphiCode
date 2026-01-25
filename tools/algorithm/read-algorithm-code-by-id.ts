@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
-import { getMainFileName } from "../_utils";
+import { getMainFileName } from "../_get-file-name-of-env";
 
 const readAlgorithmCodeByIdSchema = z.object({
   devEnv: z.string().describe("Development environment (e.g., 'Bun')"),

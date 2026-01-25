@@ -2,7 +2,7 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
 import { mkdir } from "fs/promises";
-import { getMainFileName } from "../_utils";
+import { getMainFileName } from "../_get-file-name-of-env";
 import type { AlgorithmGraphig, RuntimeEnv } from "types";
 
 const writeAlgorithmCodeByIdSchema = z.object({
