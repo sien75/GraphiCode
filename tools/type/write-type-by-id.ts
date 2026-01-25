@@ -2,6 +2,7 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
 import { mkdir } from "fs/promises";
+import { safeReadWrite } from "../_concurrent-write-file";
 import type { TypeGraphig } from "types";
 
 const writeTypeByIdSchema = z.object({
@@ -46,20 +47,18 @@ export async function writeTypeById(
   // Update type.graphig.json
   const graphigPath = join(path, "src", "types", "type.graphig.json");
   try {
-    // Read existing config
-    let config: TypeGraphig = { declaredBy: "TypeScript", types: {} };
-    try {
-      config = await Bun.file(graphigPath).json();
-    } catch (error) {
-      // File doesn't exist yet, use default structure
-      console.log(`type.graphig.json doesn't exist, creating new one`);
-    }
+    await safeReadWrite(graphigPath, (content) => {
+      let config: TypeGraphig = { declaredBy: "TypeScript", types: {} };
+      try {
+        config = JSON.parse(content);
+      } catch (error) {
+        console.log(`type.graphig.json doesn't exist, creating new one`);
+      }
 
-    // Update or add the type entry
-    config.types[id] = description;
+      config.types[id] = description;
 
-    // Write back the config
-    await Bun.write(graphigPath, JSON.stringify(config, null, 2));
+      return JSON.stringify(config, null, 2);
+    });
     updatedFiles.push(`src/types/type.graphig.json`);
   } catch (error) {
     console.error(`Failed to update type.graphig.json: ${error}`);

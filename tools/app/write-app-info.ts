@@ -1,6 +1,7 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
+import { safeReadWrite } from "../_concurrent-write-file";
 import type { AppInfo } from "types";
 
 const writeAppInfoSchema = z.object({
@@ -40,30 +41,22 @@ export async function writeAppInfo(
   ) {
     const graphigJsonPath = join(path, "graphig.json");
 
-    // Read existing config
-    let existingConfig: any = {};
     try {
-      existingConfig = await Bun.file(graphigJsonPath).json();
-    } catch (error) {
-      throw new Error(`Failed to read graphig.json: ${error}`);
-    }
-
-    // Merge with new values
-    const updatedConfig = {
-      ...existingConfig,
-      ...(appInfo.appName !== undefined && { appName: appInfo.appName }),
-      ...(appInfo.devEnv !== undefined && { devEnv: appInfo.devEnv }),
-      ...(appInfo.runtimeEnv !== undefined && {
-        runtimeEnv: appInfo.runtimeEnv,
-      }),
-    };
-
-    // Write back
-    try {
-      await Bun.write(graphigJsonPath, JSON.stringify(updatedConfig, null, 2));
+      await safeReadWrite(graphigJsonPath, (content) => {
+        const existingConfig = JSON.parse(content);
+        const updatedConfig = {
+          ...existingConfig,
+          ...(appInfo.appName !== undefined && { appName: appInfo.appName }),
+          ...(appInfo.devEnv !== undefined && { devEnv: appInfo.devEnv }),
+          ...(appInfo.runtimeEnv !== undefined && {
+            runtimeEnv: appInfo.runtimeEnv,
+          }),
+        };
+        return JSON.stringify(updatedConfig, null, 2);
+      });
       updatedFiles.push("graphig.json");
     } catch (error) {
-      throw new Error(`Failed to write graphig.json: ${error}`);
+      throw new Error(`Failed to update graphig.json: ${error}`);
     }
   }
 
@@ -82,10 +75,9 @@ export async function writeAppInfo(
   if (appInfo.projectConfig !== undefined) {
     const packageJsonPath = join(path, "package.json");
     try {
-      await Bun.write(
-        packageJsonPath,
-        JSON.stringify(appInfo.projectConfig, null, 2)
-      );
+      await safeReadWrite(packageJsonPath, () => {
+        return JSON.stringify(appInfo.projectConfig, null, 2);
+      });
       updatedFiles.push("package.json");
     } catch (error) {
       throw new Error(`Failed to write package.json: ${error}`);

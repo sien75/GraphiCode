@@ -3,6 +3,7 @@ import { z } from "zod";
 import { join } from "path";
 import { mkdir } from "fs/promises";
 import { getMainFileName } from "../_get-file-name-of-env";
+import { safeReadWrite } from "../_concurrent-write-file";
 import type { StateGraphig, RuntimeEnv } from "types";
 
 const writeStateCodeByIdSchema = z.object({
@@ -53,24 +54,22 @@ export async function writeStateCodeById(
   // Update state.graphig.json - only update runtimeEnv
   const graphigPath = join(workspacePath, "src", "states", "state.graphig.json");
   try {
-    // Read existing config
-    let config: StateGraphig = { states: {} };
-    try {
-      config = await Bun.file(graphigPath).json();
-    } catch (error) {
-      // File doesn't exist yet, use default structure
-      console.log(`state.graphig.json doesn't exist, creating new one`);
-    }
+    await safeReadWrite(graphigPath, (content) => {
+      let config: StateGraphig = { states: {} };
+      try {
+        config = JSON.parse(content);
+      } catch (error) {
+        console.log(`state.graphig.json doesn't exist, creating new one`);
+      }
 
-    // Update or add the state entry - preserve existing description if exists
-    const existingEntry = config.states[id];
-    config.states[id] = {
-      description: existingEntry?.description || "",
-      runtimeEnv: runtimeEnv as RuntimeEnv,
-    };
+      const existingEntry = config.states[id];
+      config.states[id] = {
+        description: existingEntry?.description || "",
+        runtimeEnv: runtimeEnv as RuntimeEnv,
+      };
 
-    // Write back the config
-    await Bun.write(graphigPath, JSON.stringify(config, null, 2));
+      return JSON.stringify(config, null, 2);
+    });
     updatedFiles.push(`src/states/state.graphig.json`);
   } catch (error) {
     console.error(`Failed to update state.graphig.json: ${error}`);

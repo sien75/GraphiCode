@@ -3,6 +3,7 @@ import { z } from "zod";
 import { join } from "path";
 import { mkdir } from "fs/promises";
 import { getMainFileName } from "../_get-file-name-of-env";
+import { safeReadWrite } from "../_concurrent-write-file";
 import type { AlgorithmGraphig, RuntimeEnv } from "types";
 
 const writeAlgorithmCodeByIdSchema = z.object({
@@ -53,24 +54,22 @@ export async function writeAlgorithmCodeById(
   // Update algorithm.graphig.json - only update runtimeEnv
   const graphigPath = join(workspacePath, "src", "algorithms", "algorithm.graphig.json");
   try {
-    // Read existing config
-    let config: AlgorithmGraphig = { algorithms: {} };
-    try {
-      config = await Bun.file(graphigPath).json();
-    } catch (error) {
-      // File doesn't exist yet, use default structure
-      console.log(`algorithm.graphig.json doesn't exist, creating new one`);
-    }
+    await safeReadWrite(graphigPath, (content) => {
+      let config: AlgorithmGraphig = { algorithms: {} };
+      try {
+        config = JSON.parse(content);
+      } catch (error) {
+        console.log(`algorithm.graphig.json doesn't exist, creating new one`);
+      }
 
-    // Update or add the algorithm entry - preserve existing description if exists
-    const existingEntry = config.algorithms[id];
-    config.algorithms[id] = {
-      description: existingEntry?.description || "",
-      runtimeEnv: runtimeEnv as RuntimeEnv,
-    };
+      const existingEntry = config.algorithms[id];
+      config.algorithms[id] = {
+        description: existingEntry?.description || "",
+        runtimeEnv: runtimeEnv as RuntimeEnv,
+      };
 
-    // Write back the config
-    await Bun.write(graphigPath, JSON.stringify(config, null, 2));
+      return JSON.stringify(config, null, 2);
+    });
     updatedFiles.push(`src/algorithms/algorithm.graphig.json`);
   } catch (error) {
     console.error(`Failed to update algorithm.graphig.json: ${error}`);

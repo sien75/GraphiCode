@@ -2,6 +2,7 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
 import { mkdir } from "fs/promises";
+import { safeReadWrite } from "../_concurrent-write-file";
 import type { FlowGraphig } from "types";
 
 const writeFlowCodeByIdSchema = z.object({
@@ -46,20 +47,18 @@ export async function writeFlowCodeById(
   // Update flow.graphig.json
   const graphigPath = join(path, "src", "flows", "flow.graphig.json");
   try {
-    // Read existing config
-    let config: FlowGraphig = { flows: {} };
-    try {
-      config = await Bun.file(graphigPath).json();
-    } catch (error) {
-      // File doesn't exist yet, use default structure
-      console.log(`flow.graphig.json doesn't exist, creating new one`);
-    }
+    await safeReadWrite(graphigPath, (content) => {
+      let config: FlowGraphig = { flows: {} };
+      try {
+        config = JSON.parse(content);
+      } catch (error) {
+        console.log(`flow.graphig.json doesn't exist, creating new one`);
+      }
 
-    // Update or add the flow entry
-    config.flows[id] = description;
+      config.flows[id] = description;
 
-    // Write back the config
-    await Bun.write(graphigPath, JSON.stringify(config, null, 2));
+      return JSON.stringify(config, null, 2);
+    });
     updatedFiles.push(`src/flows/flow.graphig.json`);
   } catch (error) {
     console.error(`Failed to update flow.graphig.json: ${error}`);
