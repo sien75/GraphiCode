@@ -54,10 +54,11 @@ export async function writeStateReadmeById(
       }
 
       const existingEntry = config.states[id];
-      config.states[id] = {
-        description: description,
-        runtimeEnv: existingEntry?.runtimeEnv || "Bun",
-      };
+      if (existingEntry) {
+        existingEntry.description = description;
+      } else {
+        config.states[id] = { description } as any;
+      }
 
       return JSON.stringify(config, null, 2);
     });

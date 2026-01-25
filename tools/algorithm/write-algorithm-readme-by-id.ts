@@ -54,10 +54,11 @@ export async function writeAlgorithmReadmeById(
       }
 
       const existingEntry = config.algorithms[id];
-      config.algorithms[id] = {
-        description: description,
-        runtimeEnv: existingEntry?.runtimeEnv || "Bun",
-      };
+      if (existingEntry) {
+        existingEntry.description = description;
+      } else {
+        config.algorithms[id] = { description } as any;
+      }
 
       return JSON.stringify(config, null, 2);
     });
