@@ -1,5 +1,3 @@
-import { file } from "bun";
-
 class FileLockManager {
   private locks: Map<string, Promise<void>> = new Map();
 
@@ -41,7 +39,9 @@ export async function safeRead(
   const release = await lockManager.acquireLock(filePath);
 
   try {
-    const content = await file(filePath).text();
+    const file = Bun.file(filePath);
+    const exists = await file.exists();
+    const content = exists ? await file.text() : "";
     return { content, release };
   } catch (error) {
     release();
