@@ -2,6 +2,7 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
 import { mkdir } from "fs/promises";
+import type { FlowGraphig } from "types";
 
 const writeFlowCodeByIdSchema = z.object({
   workspacePath: z.string().describe("The path to the workspace"),
@@ -9,13 +10,17 @@ const writeFlowCodeByIdSchema = z.object({
   content: z
     .string()
     .describe("New index.d2 file content"),
+  description: z
+    .string()
+    .describe("Description of the flow (required, for graphig.json)"),
 });
 
 // Core function that can be called directly
 export async function writeFlowCodeById(
   path: string,
   id: string,
-  content: string
+  content: string,
+  description: string
 ): Promise<{ success: boolean; updatedFiles: string[] }> {
   const flowFolderPath = join(path, "src", "flows", id);
   const flowFilePath = join(flowFolderPath, "index.d2");
@@ -38,6 +43,29 @@ export async function writeFlowCodeById(
     return { success: false, updatedFiles: [] };
   }
 
+  // Update flow.graphig.json
+  const graphigPath = join(path, "src", "flows", "flow.graphig.json");
+  try {
+    // Read existing config
+    let config: FlowGraphig = { flows: {} };
+    try {
+      config = await Bun.file(graphigPath).json();
+    } catch (error) {
+      // File doesn't exist yet, use default structure
+      console.log(`flow.graphig.json doesn't exist, creating new one`);
+    }
+
+    // Update or add the flow entry
+    config.flows[id] = description;
+
+    // Write back the config
+    await Bun.write(graphigPath, JSON.stringify(config, null, 2));
+    updatedFiles.push(`src/flows/flow.graphig.json`);
+  } catch (error) {
+    console.error(`Failed to update flow.graphig.json: ${error}`);
+    return { success: false, updatedFiles };
+  }
+
   return {
     success: true,
     updatedFiles,
@@ -56,16 +84,20 @@ export const writeFlowCodeByIdTool = tool(
     if (!input.content) {
       throw new Error("content is required");
     }
+    if (!input.description) {
+      throw new Error("description is required");
+    }
     return await writeFlowCodeById(
       input.workspacePath,
       input.id,
-      input.content
+      input.content,
+      input.description
     );
   },
   {
     name: "write-flow-code-by-id",
     description:
-      "Write or update the code file (index.d2) of a specific flow by its ID. Creates the folder if it doesn't exist and writes the content to index.d2 file.",
+      "Write or update the code file (index.d2) of a specific flow by its ID. Creates the folder if it doesn't exist and writes the content to index.d2 file. Also updates flow.graphig.json with the flow description.",
     schema: writeFlowCodeByIdSchema,
   }
 );

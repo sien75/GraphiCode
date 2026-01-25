@@ -3,6 +3,7 @@ import { z } from "zod";
 import { join } from "path";
 import { mkdir } from "fs/promises";
 import { getMainFileName } from "../_utils";
+import type { StateGraphig, RuntimeEnv } from "types";
 
 const writeStateCodeByIdSchema = z.object({
   devEnv: z.string().describe("Development environment (e.g., 'Bun')"),
@@ -49,6 +50,33 @@ export async function writeStateCodeById(
     return { success: false, updatedFiles: [] };
   }
 
+  // Update state.graphig.json - only update runtimeEnv
+  const graphigPath = join(workspacePath, "src", "states", "state.graphig.json");
+  try {
+    // Read existing config
+    let config: StateGraphig = { states: {} };
+    try {
+      config = await Bun.file(graphigPath).json();
+    } catch (error) {
+      // File doesn't exist yet, use default structure
+      console.log(`state.graphig.json doesn't exist, creating new one`);
+    }
+
+    // Update or add the state entry - preserve existing description if exists
+    const existingEntry = config.states[id];
+    config.states[id] = {
+      description: existingEntry?.description || "",
+      runtimeEnv: runtimeEnv as RuntimeEnv,
+    };
+
+    // Write back the config
+    await Bun.write(graphigPath, JSON.stringify(config, null, 2));
+    updatedFiles.push(`src/states/state.graphig.json`);
+  } catch (error) {
+    console.error(`Failed to update state.graphig.json: ${error}`);
+    return { success: false, updatedFiles };
+  }
+
   return {
     success: true,
     updatedFiles,
@@ -84,7 +112,7 @@ export const writeStateCodeByIdTool = tool(
   {
     name: "write-state-code-by-id",
     description:
-      "Write or update the code file of a specific state by its ID. Creates the folder if it doesn't exist and writes the content to the main file. The main file name is determined from config/main.json based on devEnv and runtimeEnv.",
+      "Write or update the code file of a specific state by its ID. Creates the folder if it doesn't exist and writes the content to the main file. The main file name is determined from config/main.json based on devEnv and runtimeEnv. Also updates state.graphig.json with the runtimeEnv.",
     schema: writeStateCodeByIdSchema,
   }
 );

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { join } from "path";
 import { mkdir } from "fs/promises";
 import { getMainFileName } from "../_utils";
+import type { AlgorithmGraphig, RuntimeEnv } from "types";
 
 const writeAlgorithmCodeByIdSchema = z.object({
   devEnv: z.string().describe("Development environment (e.g., 'Bun')"),
@@ -49,6 +50,33 @@ export async function writeAlgorithmCodeById(
     return { success: false, updatedFiles: [] };
   }
 
+  // Update algorithm.graphig.json - only update runtimeEnv
+  const graphigPath = join(workspacePath, "src", "algorithms", "algorithm.graphig.json");
+  try {
+    // Read existing config
+    let config: AlgorithmGraphig = { algorithms: {} };
+    try {
+      config = await Bun.file(graphigPath).json();
+    } catch (error) {
+      // File doesn't exist yet, use default structure
+      console.log(`algorithm.graphig.json doesn't exist, creating new one`);
+    }
+
+    // Update or add the algorithm entry - preserve existing description if exists
+    const existingEntry = config.algorithms[id];
+    config.algorithms[id] = {
+      description: existingEntry?.description || "",
+      runtimeEnv: runtimeEnv as RuntimeEnv,
+    };
+
+    // Write back the config
+    await Bun.write(graphigPath, JSON.stringify(config, null, 2));
+    updatedFiles.push(`src/algorithms/algorithm.graphig.json`);
+  } catch (error) {
+    console.error(`Failed to update algorithm.graphig.json: ${error}`);
+    return { success: false, updatedFiles };
+  }
+
   return {
     success: true,
     updatedFiles,
@@ -84,7 +112,7 @@ export const writeAlgorithmCodeByIdTool = tool(
   {
     name: "write-algorithm-code-by-id",
     description:
-      "Write or update the code file of a specific algorithm by its ID. Creates the folder if it doesn't exist and writes the content to the main file. The main file name is determined from config/main.json based on devEnv and runtimeEnv.",
+      "Write or update the code file of a specific algorithm by its ID. Creates the folder if it doesn't exist and writes the content to the main file. The main file name is determined from config/main.json based on devEnv and runtimeEnv. Also updates algorithm.graphig.json with the runtimeEnv.",
     schema: writeAlgorithmCodeByIdSchema,
   }
 );
