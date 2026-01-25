@@ -2,13 +2,13 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { join } from "path";
 
-const readFlowByIdSchema = z.object({
+const readFlowCodeByIdSchema = z.object({
   workspacePath: z.string().describe("The path to the workspace"),
   id: z.string().describe("The flow ID (folder name) to read"),
 });
 
 // Core function that can be called directly
-export async function readFlowById(
+export async function readFlowCodeById(
   path: string,
   id: string
 ): Promise<string> {
@@ -26,7 +26,7 @@ export async function readFlowById(
 }
 
 // LangChain tool wrapper
-export const readFlowByIdTool = tool(
+export const readFlowCodeByIdTool = tool(
   async (input) => {
     if (!input.workspacePath) {
       throw new Error("workspacePath is required");
@@ -34,13 +34,12 @@ export const readFlowByIdTool = tool(
     if (!input.id) {
       throw new Error("id is required");
     }
-    return await readFlowById(input.workspacePath, input.id);
+    return await readFlowCodeById(input.workspacePath, input.id);
   },
   {
-    name: "read-flow-by-id",
+    name: "read-flow-code-by-id",
     description:
-      "Read a specific flow by its ID (folder name). Returns the index.d2 content from src/flows/{id}/ folder.",
-    schema: readFlowByIdSchema,
+      "Read the code file (index.d2) of a specific flow by its ID (folder name). Returns the index.d2 content from src/flows/{id}/ folder.",
+    schema: readFlowCodeByIdSchema,
   }
 );
-

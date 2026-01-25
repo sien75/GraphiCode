@@ -20,7 +20,6 @@ export async function readAllAlgorithms(
     console.error(`Failed to read algorithm.graphig.json: ${error}`);
     // Return default structure if file doesn't exist
     return {
-      runtimeEnv: "Bun",
       algorithms: {},
     };
   }

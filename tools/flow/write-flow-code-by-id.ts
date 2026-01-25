@@ -3,7 +3,7 @@ import { z } from "zod";
 import { join } from "path";
 import { mkdir } from "fs/promises";
 
-const writeFlowByIdSchema = z.object({
+const writeFlowCodeByIdSchema = z.object({
   workspacePath: z.string().describe("The path to the workspace"),
   id: z.string().describe("The flow ID (folder name) to write"),
   content: z
@@ -12,7 +12,7 @@ const writeFlowByIdSchema = z.object({
 });
 
 // Core function that can be called directly
-export async function writeFlowById(
+export async function writeFlowCodeById(
   path: string,
   id: string,
   content: string
@@ -45,7 +45,7 @@ export async function writeFlowById(
 }
 
 // LangChain tool wrapper
-export const writeFlowByIdTool = tool(
+export const writeFlowCodeByIdTool = tool(
   async (input) => {
     if (!input.workspacePath) {
       throw new Error("workspacePath is required");
@@ -56,17 +56,16 @@ export const writeFlowByIdTool = tool(
     if (!input.content) {
       throw new Error("content is required");
     }
-    return await writeFlowById(
+    return await writeFlowCodeById(
       input.workspacePath,
       input.id,
       input.content
     );
   },
   {
-    name: "write-flow-by-id",
+    name: "write-flow-code-by-id",
     description:
-      "Write or update a specific flow by its ID. Creates the folder if it doesn't exist and writes the content to index.d2 file.",
-    schema: writeFlowByIdSchema,
+      "Write or update the code file (index.d2) of a specific flow by its ID. Creates the folder if it doesn't exist and writes the content to index.d2 file.",
+    schema: writeFlowCodeByIdSchema,
   }
 );
-

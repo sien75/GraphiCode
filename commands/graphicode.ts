@@ -3,7 +3,7 @@ import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
 import type { BaseMessage } from "@langchain/core/messages";
 import type { AgentState } from "../types";
 
-import { mainNode, mainToolsNode } from "../nodes/architect";
+import { architectNode, architectToolsNode } from "../nodes/architect";
 import { displayNode } from "../nodes/display";
 import { humanNode } from "../nodes/human";
 
@@ -40,35 +40,33 @@ const AgentStateAnnotation = Annotation.Root({
 function shouldCallTools(state: any) {
   const messages = state.messages;
   if (!messages || messages.length === 0) {
-    return "display";
+    return "END";
   }
 
   const lastMessage = messages[messages.length - 1];
 
   // If the last message has tool calls, go to tools
   if (lastMessage?.tool_calls && lastMessage.tool_calls.length > 0) {
-    return "tools";
+    return "architectToolsNode";
   }
 
-  // Otherwise, go to display node to show messages
-  return "display";
+  // Otherwise, end the workflow
+  return "END";
 }
 
 const workflow = new StateGraph(AgentStateAnnotation);
 
 workflow
-  .addNode("mainNode", mainNode)
-  .addNode("tools", mainToolsNode)
-  .addNode("display", displayNode)
+  .addNode("architectNode", architectNode)
+  .addNode("architectToolsNode", architectToolsNode)
   .addNode("human", humanNode)
   .addEdge(START, "human")
-  .addEdge("human", "mainNode")
-  .addConditionalEdges("mainNode", shouldCallTools, {
-    tools: "tools",
-    display: "display",
+  .addEdge("human", "architectNode")
+  .addConditionalEdges("architectNode", shouldCallTools, {
+    architectToolsNode: "architectToolsNode",
+    END: END,
   })
-  .addEdge("tools", "mainNode")
-  .addEdge("display", "human");
+  .addEdge("architectToolsNode", "architectNode");
 
 const app = workflow.compile();
 
@@ -90,7 +88,11 @@ console.log("Type your questions and press Enter\n");
 /* Start the workflow - it will loop indefinitely */
 
 try {
-  await app.invoke(initialState);
+  const finalState = await app.invoke(initialState);
+  await Bun.write(
+    `${workspacePath}/log.txt`,
+    `finalState at ${new Date().toISOString()}:\n${JSON.stringify(finalState, null, 2)}\n`
+  );
 } catch (error) {
   console.error(`\nError: ${error}\n`);
   process.exit(1);
