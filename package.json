@@ -12,7 +12,7 @@
   "files": [
     "index.ts",
     "types.ts",
-    "agents/",
+    "agent/",
     "config/",
     "flow-parser/",
     "flow-render/",
@@ -26,7 +26,9 @@
   "author": "sien75",
   "license": "MIT",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/react": "^19.2.9",
+    "@types/react-dom": "^19.2.3"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -38,6 +40,8 @@
     "@playwright/test": "^1.57.0",
     "langchain": "^1.2.7",
     "peggy": "^5.0.6",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "zod": "^4.3.5"
   },
   "scripts": {

@@ -1,5 +1,6 @@
 import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
 import type { BaseMessage } from "@langchain/core/messages";
+import { HumanMessage } from "@langchain/core/messages";
 import type { AgentState } from "../types";
 
 import { architectNode, architectToolsNode } from "./architect";
@@ -31,7 +32,7 @@ function shouldCallTools(state: any) {
   return "END";
 }
 
-export async function runGraphiCode(workspacePath: string) {
+export async function runAgent(workspacePath: string, userPrompt: string) {
   const workflow = new StateGraph(AgentStateAnnotation);
 
   workflow
@@ -47,7 +48,7 @@ export async function runGraphiCode(workspacePath: string) {
   const app = workflow.compile();
 
   const initialState: AgentState = {
-    messages: [],
+    messages: [new HumanMessage(userPrompt)],
     types: [],
     states: [],
     algorithms: [],

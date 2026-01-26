@@ -1,19 +1,182 @@
 #!/usr/bin/env bun
-import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
-import type { BaseMessage } from "@langchain/core/messages";
-import type { AgentState } from "../types";
+import { rmSync, mkdirSync } from "fs";
+import { runAgent } from "../agent/index";
+import { readAllStates } from "../tools/state/read-all-states";
+import { readAllTypes } from "../tools/type/read-all-types";
+import { readAllFlows } from "../tools/flow/read-all-flows";
+import { readFlowCodeById } from "../tools/flow/read-flow-code-by-id";
+import { renderD2ToSVGContent } from "../flow/renderer";
 
-import { architectNode, architectToolsNode } from "../nodes/architect";
-import { displayNode } from "../nodes/display";
-import { humanNode } from "../nodes/human";
+async function buildView() {
+  const viewDir = `${import.meta.dir}/../view`;
+  const outDir = `${viewDir}/out`;
 
-import { readAppInfo } from "../tools/app/read-app-info";
+  console.log("🧹 Cleaning output directory...");
+  rmSync(outDir, { recursive: true, force: true });
+  mkdirSync(outDir, { recursive: true });
 
-/* read workspacePath from command line arguments */
+  console.log("📦 Building main.tsx...");
+  const buildResult = await Bun.build({
+    entrypoints: [`${viewDir}/main.tsx`],
+    outdir: outDir,
+    minify: true,
+    sourcemap: "external",
+    target: "browser",
+  });
+
+  if (!buildResult.success) {
+    console.error("❌ Build failed:");
+    for (const log of buildResult.logs) {
+      console.error(log);
+    }
+    process.exit(1);
+  }
+
+  console.log("📄 Copying index.html...");
+  const htmlContent = await Bun.file(`${viewDir}/index.html`).text();
+  await Bun.write(`${outDir}/index.html`, htmlContent);
+
+  console.log("✅ Build complete!");
+  console.log(`   Output: ${outDir}`);
+
+  return outDir;
+}
+
+function serveHttp(workspacePath: string, outDir: string) {
+  console.log("🚀 Running server...");
+  Bun.serve({
+    port: 7500,
+    idleTimeout: 500,
+    routes: {
+      "/": () => new Response(Bun.file(`${outDir}/index.html`)),
+    "/api/llm-stream": async (req) => {
+      const url = new URL(req.url);
+      const userPrompt = url.searchParams.get("userPrompt");
+      
+      if (!userPrompt) {
+        return new Response("Missing userPrompt parameter", { status: 400 });
+      }
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            const agentStream = await runAgent(workspacePath, userPrompt);
+            let sentMessageCount = 0;
+            
+            for await (const stateUpdate of agentStream) {
+              // LangGraph stream 返回的是 { nodeName: nodeState } 格式
+              const nodeStates = Object.values(stateUpdate);
+              if (nodeStates.length === 0) continue;
+              
+              const state: any = nodeStates[0];
+              const messages = state.messages || [];
+              
+              // 只发送新增的消息
+              for (let i = sentMessageCount; i < messages.length; i++) {
+                const message = messages[i];
+                const messageType = message._getType();
+                
+                let content = "";
+                
+                if (messageType === "human") {
+                  content = message.content;
+                } else if (messageType === "ai") {
+                  if (message.content) {
+                    content = message.content;
+                  } else if (message.tool_calls && message.tool_calls.length > 0) {
+                    content = message.tool_calls.map((v: any) => v.name).join(", ");
+                  }
+                } else if (messageType === "tool") {
+                  content = message.name || "";
+                }
+                
+                controller.enqueue(`[${messageType}]: ${content}\n\n`);
+              }
+              
+              sentMessageCount = messages.length;
+            }
+            
+            controller.enqueue("[DONE]\n\n");
+            controller.close();
+          } catch (error) {
+            controller.enqueue(`error: ${JSON.stringify({ error: String(error) })}\n\n`);
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      });
+    },
+    "/api/get-workspace-info": async (req) => {
+      try {
+        // 读取所有 states
+        const statesData = await readAllStates(workspacePath);
+        const stateIds = Object.keys(statesData.states || {});
+        
+        // 读取所有 types
+        const typesData = await readAllTypes(workspacePath);
+        const typeIds = Object.keys(typesData.types || {});
+        
+        // 读取所有 flows
+        const flowsData = await readAllFlows(workspacePath);
+        const flowIds = Object.keys(flowsData.flows || {});
+        
+        // 为每个 flow 生成 SVG
+        const viewOutDir = `${import.meta.dir}/../view/out`;
+        for (const flowId of flowIds) {
+          try {
+            const flowCode = await readFlowCodeById(workspacePath, flowId);
+            await renderD2ToSVGContent(flowCode, viewOutDir, flowId);
+            console.log(`✅ Rendered flow: ${flowId}`);
+          } catch (error) {
+            console.error(`❌ Failed to render flow ${flowId}: ${error}`);
+          }
+        }
+        
+        // 构建响应
+        const response = {
+          stateIds,
+          typeIds,
+          flowIds,
+        };
+        
+        return new Response(JSON.stringify(response), {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (error) {
+        return new Response(
+          JSON.stringify({ error: String(error) }),
+          { 
+            status: 500,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+    },
+    "/*": (req) => {
+      const url = new URL(req.url);
+      const filePath = url.pathname;
+      return new Response(Bun.file(`${outDir}${filePath}`));
+    },
+  },
+  });
+
+  console.log("✅ Server running at http://localhost:7500");
+}
+
+/* Main */
 
 let workspacePath = Bun.argv[2];
-
-/* if no workspace provided, show usage and exit */
 
 if (!workspacePath) {
   console.error("Usage: graphicode <workspacePath>");
@@ -23,77 +186,5 @@ if (!workspacePath) {
 
 console.log(`Working directory: ${workspacePath}\n`);
 
-/* Step 1: Define AgentState using Annotation */
-
-const AgentStateAnnotation = Annotation.Root({
-  messages: Annotation<BaseMessage[]>(),
-  types: Annotation<any[]>(),
-  states: Annotation<any[]>(),
-  algorithms: Annotation<any[]>(),
-  flows: Annotation<any[]>(),
-  workspacePath: Annotation<string>(),
-  appInfo: Annotation<any>(),
-});
-
-/* Step 2: Initialize LangGraph workflow and build chain */
-
-function shouldCallTools(state: any) {
-  const messages = state.messages;
-  if (!messages || messages.length === 0) {
-    return "END";
-  }
-
-  const lastMessage = messages[messages.length - 1];
-
-  // If the last message has tool calls, go to tools
-  if (lastMessage?.tool_calls && lastMessage.tool_calls.length > 0) {
-    return "architectToolsNode";
-  }
-
-  // Otherwise, end the workflow
-  return "END";
-}
-
-const workflow = new StateGraph(AgentStateAnnotation);
-
-workflow
-  .addNode("architectNode", architectNode)
-  .addNode("architectToolsNode", architectToolsNode)
-  .addNode("human", humanNode)
-  .addEdge(START, "human")
-  .addEdge("human", "architectNode")
-  .addConditionalEdges("architectNode", shouldCallTools, {
-    architectToolsNode: "architectToolsNode",
-    END: END,
-  })
-  .addEdge("architectToolsNode", "architectNode");
-
-const app = workflow.compile();
-
-/* Command line interaction */
-
-const initialState: AgentState = {
-  messages: [],
-  types: [],
-  states: [],
-  algorithms: [],
-  flows: [],
-  workspacePath,
-  appInfo: await readAppInfo(workspacePath), // read app info from workspacePath at start
-};
-
-console.log("\n=== GraphiCode Chat ===");
-console.log("Type your questions and press Enter\n");
-
-/* Start the workflow - it will loop indefinitely */
-
-try {
-  const finalState = await app.invoke(initialState);
-  await Bun.write(
-    `${workspacePath}/log.txt`,
-    `finalState at ${new Date().toISOString()}:\n${JSON.stringify(finalState, null, 2)}\n`
-  );
-} catch (error) {
-  console.error(`\nError: ${error}\n`);
-  process.exit(1);
-}
+const outDir = await buildView();
+serveHttp(workspacePath, outDir);
