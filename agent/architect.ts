@@ -39,7 +39,7 @@ const tools = [
 ];
 
 export const architectAgent = new ChatOpenAI({
-  modelName: "openai/gpt-5-mini",
+  modelName: "google/gemini-3-flash-preview",
   apiKey: process.env.OPENAI_API_KEY,
   configuration: {
     baseURL: "https://openrouter.ai/api/v1",

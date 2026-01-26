@@ -15,52 +15,54 @@ body {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .top-panels {
   display: flex;
-  height: 300px;
+  height: 30vh;
   width: 100%;
+  flex-shrink: 0;
 }
 
-.panel-left-top {
-  width: 50%;
-  height: 300px;
+.panel-top {
+  flex: 1;
+  height: 30vh;
   background: #252526;
   border: 1px solid #3e3e42;
   padding: 1rem;
-  overflow: auto;
-}
-
-.panel-right-top {
-  width: 50%;
-  height: 300px;
-  background: #252526;
-  border: 1px solid #3e3e42;
-  padding: 1rem;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .bottom-panels {
-  flex: 1;
   display: flex;
+  height: 60vh;
   width: 100%;
+  flex-shrink: 0;
 }
 
 .panel-bottom-left {
   width: 50%;
+  height: 60vh;
   background: #2d2d30;
   border: 1px solid #3e3e42;
   padding: 1rem;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .panel-bottom-right {
   width: 50%;
+  height: 60vh;
   background: #252526;
   border: 1px solid #3e3e42;
   padding: 1rem;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 h3 {
@@ -70,12 +72,15 @@ h3 {
   color: #d4d4d4;
   border-bottom: 1px solid #3e3e42;
   padding-bottom: 0.5rem;
+  flex-shrink: 0;
 }
 
 .item-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .item-list li {
@@ -92,6 +97,8 @@ h3 {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .flow-code {
@@ -119,6 +126,8 @@ h3 {
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .input-container {
@@ -126,9 +135,11 @@ h3 {
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
+  height: 10vh;
   padding: 1rem;
   background: #252526;
   border-top: 1px solid #3e3e42;
+  flex-shrink: 0;
 }
 
 .prompt-input {

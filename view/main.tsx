@@ -5,6 +5,7 @@ import "./main.css";
 interface WorkspaceInfo {
   stateIds: string[];
   typeIds: string[];
+  algorithmIds: string[];
   flowIds: string[];
 }
 
@@ -14,6 +15,7 @@ const App = () => {
   const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo>({
     stateIds: [],
     typeIds: [],
+    algorithmIds: [],
     flowIds: [],
   });
 
@@ -66,7 +68,7 @@ const App = () => {
   return (
     <div className="app-container">
       <div className="top-panels">
-        <div className="panel-left-top">
+        <div className="panel-top">
           <h3>States</h3>
           <ul className="item-list">
             {workspaceInfo.stateIds.map((id, index) => (
@@ -74,10 +76,18 @@ const App = () => {
             ))}
           </ul>
         </div>
-        <div className="panel-right-top">
+        <div className="panel-top">
           <h3>Types</h3>
           <ul className="item-list">
             {workspaceInfo.typeIds.map((id, index) => (
+              <li key={index}>{id}</li>
+            ))}
+          </ul>
+        </div>
+        <div className="panel-top">
+          <h3>Algorithms</h3>
+          <ul className="item-list">
+            {workspaceInfo.algorithmIds.map((id, index) => (
               <li key={index}>{id}</li>
             ))}
           </ul>
@@ -88,7 +98,7 @@ const App = () => {
           <h3>Flows</h3>
           <div className="flows-container">
             {workspaceInfo.flowIds.map((flowId, index) => (
-              <pre key={index} className="flow-code">
+              <pre key={Math.random()} className="flow-code">
                 <img src={`/${flowId}.svg`} alt={flowId} />
               </pre>
             ))}
@@ -106,7 +116,6 @@ const App = () => {
           placeholder="Enter your prompt..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
         />
         <button className="btn-submit" onClick={handleSubmit}>
           Submit
