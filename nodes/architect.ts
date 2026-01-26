@@ -39,7 +39,7 @@ const tools = [
 ];
 
 export const architectAgent = new ChatOpenAI({
-  modelName: "anthropic/claude-sonnet-4.5",
+  modelName: "openai/gpt-5-mini",
   apiKey: process.env.OPENAI_API_KEY,
   configuration: {
     baseURL: "https://openrouter.ai/api/v1",

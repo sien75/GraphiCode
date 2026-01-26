@@ -99,6 +99,10 @@ describe what the algorithm do.
 
 Here typeA is a type ID, and the type details are defined in types, which you need to look up based on typeA.
 
+When writing algorithms, do not mention states or flows. Algorithms should only depend on types.
+
+When writing algorithm readme, do not mention specific technical terms. You only need to declare what algorithm you need.
+
 #### state file's format
 
 State nodes contain 3 types of methods: read/write/sendEvent. Regardless of the method type, they all input/output serializable data.
@@ -125,14 +129,24 @@ typeH
 #### sendEvent2
 typrI
 ### description
-describe what the state stands for.
+This state is a memory state, which means...
 ```
 
 Here typeA is a type ID, and the type details are defined in types, which you need to look up based on typeA.
 
+**Important: When writing state descriptions, always maintain mapping thinking**
+
+Mapping thinking means that no matter what the state is, it must correspond to a concrete entity. In other words, you must clearly specify where this state resides, for example: ordinary in-memory state, persistent state on disk, or state in a database.
+
+When writing states, do not mention algorithms or flows. States should only depend on types.
+
 #### type file's format
 
-Currently, type files are TypeScript files. Types can depend on each other, and their actual files are in the same folder, so you can simply use "import ./xxx".
+Currently, type files are TypeScript files.
+
+Types can depend on each other, and their actual files are in the same folder, so you can simply use "import xx from ./xxx".
+
+Types must "type typeName = xxx;\nexport default typeName" one type, and typeName must be the same as the type id (including matching case).
 
 #### **Important: How to distinguish between states and algorithms?**
 
