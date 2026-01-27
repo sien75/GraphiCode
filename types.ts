@@ -7,10 +7,6 @@ import { BaseMessage } from "@langchain/core/messages";
 
 export type AgentState = {
   messages: BaseMessage[];
-  types: any[];
-  states: any[];
-  algorithms: any[];
-  flows: any[];
   workspacePath: string;
   appInfo: AppInfo | null;
 };

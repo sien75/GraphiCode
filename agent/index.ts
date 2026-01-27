@@ -9,10 +9,6 @@ import { readAppInfo } from "../tools/app/read-app-info";
 
 const AgentStateAnnotation = Annotation.Root({
   messages: Annotation<BaseMessage[]>(),
-  types: Annotation<any[]>(),
-  states: Annotation<any[]>(),
-  algorithms: Annotation<any[]>(),
-  flows: Annotation<any[]>(),
   workspacePath: Annotation<string>(),
   appInfo: Annotation<any>(),
 });
@@ -49,10 +45,6 @@ export async function runAgent(workspacePath: string, userPrompt: string) {
 
   const initialState: AgentState = {
     messages: [new HumanMessage(userPrompt)],
-    types: [],
-    states: [],
-    algorithms: [],
-    flows: [],
     workspacePath,
     appInfo: await readAppInfo(workspacePath),
   };
