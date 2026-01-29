@@ -1,11 +1,33 @@
 import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
 import type { BaseMessage } from "@langchain/core/messages";
 import { HumanMessage } from "@langchain/core/messages";
+import { ToolNode } from "@langchain/langgraph/prebuilt";
+import { ChatOpenAI } from "@langchain/openai";
+
 import type { AgentState } from "../types";
-
-import { architectNode, architectToolsNode } from "./architect";
-
 import { readAppInfo } from "../tools/app/read-app-info";
+
+import { architectModelName, architectTools } from "./architect";
+import ARCHITECT_SKILL from "skills/architect.md" with { type: "text" };
+
+const AGENT_CONFIGS = {
+  architect: {
+    modelName: architectModelName,
+    tools: architectTools,
+    skill: ARCHITECT_SKILL,
+  },
+  // juniorEngineer: {
+  //   modelName: juniorEngineerModelName,
+  //   tools: juniorEngineerTools,
+  //   skill: JUNIOR_ENGINEER_SKILL,
+  // },
+  // testEngineer: {
+  //   modelName: testEngineerModelName,
+  //   tools: testEngineerTools,
+  //   skill: TEST_ENGINEER_SKILL,
+  // },
+};
+
 
 const AgentStateAnnotation = Annotation.Root({
   messages: Annotation<BaseMessage[]>(),
@@ -22,24 +44,83 @@ function shouldCallTools(state: any) {
   const lastMessage = messages[messages.length - 1];
 
   if (lastMessage?.tool_calls && lastMessage.tool_calls.length > 0) {
-    return "architectToolsNode";
+    return "toolsNode";
   }
 
   return "END";
 }
 
-export async function runAgent(workspacePath: string, userPrompt: string) {
+function createAgentNode(modelName: string, tools: any[], skill: string) {
+  const model = new ChatOpenAI({
+    modelName,
+    apiKey: process.env.OPENAI_API_KEY,
+    configuration: {
+      baseURL: "https://openrouter.ai/api/v1",
+    },
+  });
+
+  const agent = model.bindTools(tools);
+
+  return async (state: AgentState) => {
+    const messages = state.messages || [];
+
+    // parameters information
+    const parametersInfo = `
+IMPORTANT: When calling tools that require parameters, here are the parameters:
+* workspacePath: "${state.workspacePath}"
+* devEnv: "${state.appInfo?.devEnv}"
+* runtimeEnv: "${state.appInfo?.runtimeEnv}"
+`;
+
+    // add system prompt if no messages yet
+    const firstPrompt = {
+      role: "system",
+      content: skill + parametersInfo,
+    };
+    const invokeMessage = [firstPrompt, ...messages];
+
+    const response = await agent.invoke(invokeMessage);
+
+    return {
+      messages: [...messages, response],
+    };
+  };
+}
+
+function createToolsNode(tools: any[]) {
+  return async (state: AgentState) => {
+    const result = await new ToolNode(tools).invoke(state);
+
+    return {
+      messages: [...state.messages, ...result.messages],
+    };
+  };
+}
+
+export async function runAgent(
+  workspacePath: string,
+  userPrompt: string,
+  agentRole: string = "architect"
+) {
+  const config = AGENT_CONFIGS[agentRole as keyof typeof AGENT_CONFIGS];
+  if (!config) {
+    throw new Error(`Unknown agent role: ${agentRole}. Available roles: ${Object.keys(AGENT_CONFIGS).join(", ")}`);
+  }
+
   const workflow = new StateGraph(AgentStateAnnotation);
 
+  const agentNode = createAgentNode(config.modelName, config.tools, config.skill);
+  const toolsNode = createToolsNode(config.tools);
+
   workflow
-    .addNode("architectNode", architectNode)
-    .addNode("architectToolsNode", architectToolsNode)
-    .addEdge(START, "architectNode")
-    .addConditionalEdges("architectNode", shouldCallTools, {
-      architectToolsNode: "architectToolsNode",
+    .addNode("agentNode", agentNode)
+    .addNode("toolsNode", toolsNode)
+    .addEdge(START, "agentNode")
+    .addConditionalEdges("agentNode", shouldCallTools, {
+      toolsNode: "toolsNode",
       END: END,
     })
-    .addEdge("architectToolsNode", "architectNode");
+    .addEdge("toolsNode", "agentNode");
 
   const app = workflow.compile();
 

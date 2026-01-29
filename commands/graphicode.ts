@@ -43,7 +43,7 @@ async function buildView() {
   return outDir;
 }
 
-function serveHttp(workspacePath: string, outDir: string) {
+function serveHttp(workspacePath: string, outDir: string, role: string) {
   console.log("🚀 Running server...");
   Bun.serve({
     port: 7500,
@@ -61,7 +61,7 @@ function serveHttp(workspacePath: string, outDir: string) {
         const stream = new ReadableStream({
           async start(controller) {
             try {
-              const agentStream = await runAgent(workspacePath, userPrompt);
+              const agentStream = await runAgent(workspacePath, userPrompt, role);
               let sentMessageCount = 0;
 
               for await (const stateUpdate of agentStream) {
@@ -180,17 +180,54 @@ function serveHttp(workspacePath: string, outDir: string) {
   console.log("✅ Server running at http://localhost:7500");
 }
 
-/* Main */
+function parseArgs(): { workspacePath: string; role: string } {
+  const args = Bun.argv.slice(2);
+  let workspacePath: string | undefined;
+  let role = "architect";
 
-let workspacePath = Bun.argv[2];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
 
-if (!workspacePath) {
-  console.error("Usage: graphicode <workspacePath>");
-  console.error("Example: graphicode . or graphicode ./my-project");
-  process.exit(1);
+    if (arg === "--role" || arg === "-r") {
+      // 下一个参数是角色
+      if (i + 1 < args.length && args[i + 1]) {
+        role = args[i + 1]!;
+        i++; // 跳过下一个参数
+      } else {
+        console.error("Error: --role/-r requires a value");
+        process.exit(1);
+      }
+    } else if (!workspacePath) {
+      // 第一个非选项参数是 workspacePath
+      workspacePath = arg;
+    }
+  }
+
+  if (!workspacePath) {
+    console.error("Usage: graphicode [--role|-r <role>] <workspacePath>");
+    console.error("       graphicode <workspacePath> [--role|-r <role>]");
+    console.error("");
+    console.error("Options:");
+    console.error("  --role, -r    Agent role (default: architect)");
+    console.error("");
+    console.error("Examples:");
+    console.error("  graphicode .");
+    console.error("  graphicode ./my-project");
+    console.error("  graphicode --role architect .");
+    console.error("  graphicode . --role juniorEngineer");
+    console.error("  graphicode -r architect ./my-project");
+    process.exit(1);
+  }
+
+  return { workspacePath: workspacePath!, role };
 }
 
-console.log(`Working directory: ${workspacePath}\n`);
+/* Main */
+
+const { workspacePath, role } = parseArgs();
+
+console.log(`Working directory: ${workspacePath}`);
+console.log(`Agent role: ${role}\n`);
 
 const outDir = await buildView();
-serveHttp(workspacePath, outDir);
+serveHttp(workspacePath, outDir, role);

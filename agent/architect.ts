@@ -1,8 +1,3 @@
-import { ChatOpenAI } from "@langchain/openai";
-import type { AgentState } from "../types";
-import { ToolNode } from "@langchain/langgraph/prebuilt";
-import ARCHITECT_SKILL from "skills/architect.md" with { type: "text" };
-
 // Algorithm tools
 import { readAllAlgorithmsTool } from "../tools/algorithm/read-all-algorithms";
 import { readAlgorithmReadmeByIdTool } from "../tools/algorithm/read-algorithm-readme-by-id";
@@ -23,7 +18,7 @@ import { readAllFlowsTool } from "../tools/flow/read-all-flows";
 import { readFlowCodeByIdTool } from "../tools/flow/read-flow-code-by-id";
 import { writeFlowCodeByIdTool } from "../tools/flow/write-flow-code-by-id";
 
-const tools = [
+export const architectTools = [
   readAllAlgorithmsTool,
   readAlgorithmReadmeByIdTool,
   writeAlgorithmReadmeByIdTool,
@@ -38,43 +33,4 @@ const tools = [
   writeFlowCodeByIdTool,
 ];
 
-export const architectAgent = new ChatOpenAI({
-  modelName: "google/gemini-3-flash-preview",
-  apiKey: process.env.OPENAI_API_KEY,
-  configuration: {
-    baseURL: "https://openrouter.ai/api/v1",
-  },
-}).bindTools(tools);
-
-export async function architectNode(state: AgentState) {
-  const messages = state.messages || [];
-
-  // parameters information
-  const parametersInfo = `
-IMPORTANT: When calling tools that require parameters, here are the parameters:
-* workspacePath: "${state.workspacePath}"
-* devEnv: "${state.appInfo?.devEnv}"
-* runtimeEnv: "${state.appInfo?.runtimeEnv}"
-`;
-
-  // add system prompt if no messages yet
-  const firstPrompt = {
-    role: "system",
-    content: ARCHITECT_SKILL + parametersInfo,
-  };
-  const invokeMessage = [firstPrompt, ...messages];
-
-  const response = await architectAgent.invoke(invokeMessage);
-
-  return {
-    messages: [...messages, response],
-  };
-}
-
-export async function architectToolsNode(state: AgentState) {
-  const result = await (new ToolNode(tools)).invoke(state);
-
-  return {
-    messages: [...state.messages, ...result.messages],
-  };
-}
+export const architectModelName = "google/gemini-3-flash-preview";
