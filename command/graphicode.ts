@@ -1,12 +1,57 @@
 #!/usr/bin/env bun
-import { rmSync, mkdirSync } from "fs";
+import { rmSync, mkdirSync, readdirSync } from "fs";
+import { join } from "path";
 import { runAgent } from "../agent/index";
+import { readAppInfo } from "../tools/app/read-app-info";
 import { readAllStates } from "../tools/state/read-all-states";
 import { readAllTypes } from "../tools/type/read-all-types";
 import { readAllAlgorithms } from "../tools/algorithm/read-all-algorithms";
 import { readAllFlows } from "../tools/flow/read-all-flows";
 import { readFlowCodeById } from "../tools/flow/read-flow-code-by-id";
 import { renderD2ToSVGContent } from "../flow/renderer";
+import type { AppInfo } from "../types";
+
+function parseArgs(): { workspacePath: string; role: string } {
+  const args = Bun.argv.slice(2);
+  let workspacePath: string | undefined;
+  let role = "architect";
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    if (arg === "--role" || arg === "-r") {
+      // 下一个参数是角色
+      if (i + 1 < args.length && args[i + 1]) {
+        role = args[i + 1]!;
+        i++; // 跳过下一个参数
+      } else {
+        console.error("Error: --role/-r requires a value");
+        process.exit(1);
+      }
+    } else if (!workspacePath) {
+      // 第一个非选项参数是 workspacePath
+      workspacePath = arg;
+    }
+  }
+
+  if (!workspacePath) {
+    console.error("Usage: graphicode [--role|-r <role>] <workspacePath>");
+    console.error("       graphicode <workspacePath> [--role|-r <role>]");
+    console.error("");
+    console.error("Options:");
+    console.error("  --role, -r    Agent role (default: architect)");
+    console.error("");
+    console.error("Examples:");
+    console.error("  graphicode .");
+    console.error("  graphicode ./my-project");
+    console.error("  graphicode --role architect .");
+    console.error("  graphicode . --role juniorEngineer");
+    console.error("  graphicode -r architect ./my-project");
+    process.exit(1);
+  }
+
+  return { workspacePath: workspacePath!, role };
+}
 
 async function buildView() {
   const viewDir = `${import.meta.dir}/../view`;
@@ -43,7 +88,7 @@ async function buildView() {
   return outDir;
 }
 
-function serveHttp(workspacePath: string, outDir: string, role: string) {
+function serveHttp(workspacePath: string, outDir: string, role: string, appInfo: AppInfo | null) {
   console.log("🚀 Running server...");
   Bun.serve({
     port: 7500,
@@ -61,7 +106,7 @@ function serveHttp(workspacePath: string, outDir: string, role: string) {
         const stream = new ReadableStream({
           async start(controller) {
             try {
-              const agentStream = await runAgent(workspacePath, userPrompt, role);
+              const agentStream = await runAgent(workspacePath, userPrompt, role, appInfo);
               let sentMessageCount = 0;
 
               for await (const stateUpdate of agentStream) {
@@ -180,46 +225,21 @@ function serveHttp(workspacePath: string, outDir: string, role: string) {
   console.log("✅ Server running at http://localhost:7500");
 }
 
-function parseArgs(): { workspacePath: string; role: string } {
-  const args = Bun.argv.slice(2);
-  let workspacePath: string | undefined;
-  let role = "architect";
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-
-    if (arg === "--role" || arg === "-r") {
-      // 下一个参数是角色
-      if (i + 1 < args.length && args[i + 1]) {
-        role = args[i + 1]!;
-        i++; // 跳过下一个参数
-      } else {
-        console.error("Error: --role/-r requires a value");
-        process.exit(1);
-      }
-    } else if (!workspacePath) {
-      // 第一个非选项参数是 workspacePath
-      workspacePath = arg;
+async function copyUtilsToWorkspace(workspacePath: string, language: string) {
+  const utilsDir = join(import.meta.dir, "..", "utils", language);
+  
+  try {
+    const files = readdirSync(utilsDir);
+    for (const file of files) {
+      const srcPath = join(utilsDir, file);
+      const destPath = join(workspacePath, "utils", file);
+      const fileContent = await Bun.file(srcPath).text();
+      await Bun.write(destPath, fileContent);
+      console.log(`📄 Copied utils/${language}/${file} to workspace`);
     }
+  } catch (error) {
+    console.warn(`⚠️ No utils found for language: ${language}`);
   }
-
-  if (!workspacePath) {
-    console.error("Usage: graphicode [--role|-r <role>] <workspacePath>");
-    console.error("       graphicode <workspacePath> [--role|-r <role>]");
-    console.error("");
-    console.error("Options:");
-    console.error("  --role, -r    Agent role (default: architect)");
-    console.error("");
-    console.error("Examples:");
-    console.error("  graphicode .");
-    console.error("  graphicode ./my-project");
-    console.error("  graphicode --role architect .");
-    console.error("  graphicode . --role juniorEngineer");
-    console.error("  graphicode -r architect ./my-project");
-    process.exit(1);
-  }
-
-  return { workspacePath: workspacePath!, role };
 }
 
 /* Main */
@@ -229,5 +249,12 @@ const { workspacePath, role } = parseArgs();
 console.log(`Working directory: ${workspacePath}`);
 console.log(`Agent role: ${role}\n`);
 
+const appInfo = await readAppInfo(workspacePath);
+if (!appInfo) {
+  console.error("❌ Failed to read app info");
+  process.exit(1);
+}
+
+await copyUtilsToWorkspace(workspacePath, appInfo.language);
 const outDir = await buildView();
-serveHttp(workspacePath, outDir, role);
+serveHttp(workspacePath, outDir, role, appInfo);

@@ -5,9 +5,9 @@
   "module": "index.ts",
   "type": "module",
   "bin": {
-    "graphicode": "./commands/graphicode.ts",
+    "graphicode": "./command/graphicode.ts",
     "playwright-install": "bunx playwright install",
-    "playwright-test": "./commands/playwright-test.ts"
+    "playwright-test": "./command/playwright-test.ts"
   },
   "files": [
     "index.ts",
