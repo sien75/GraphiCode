@@ -30,11 +30,14 @@ export async function readAppInfo(path: string): Promise<AppInfo> {
     console.error(`Failed to read README.md: ${error}`);
   }
 
-  // read project config based on devEnv from config/main.json
+  // read project config based on language and devEnv from config/main.json
   let projectConfig: any = null;
   try {
-    // Find the devEnv configuration
-    const devEnvConfig = mainConfig.devEnvs?.find(
+    // Find the language configuration first, then devEnv
+    const languageConfig = mainConfig.languages?.find(
+      (lang: any) => lang.name === graphigConfig?.language
+    );
+    const devEnvConfig = languageConfig?.devEnvs?.find(
       (env: any) => env.name === graphigConfig?.devEnv
     );
     
@@ -49,6 +52,7 @@ export async function readAppInfo(path: string): Promise<AppInfo> {
   // organize return value by AppInfo type
   const appInfo: AppInfo = {
     appName: graphigConfig?.appName || "Unknown",
+    language: graphigConfig?.language || "TypeScript",
     devEnv: graphigConfig?.devEnv || "Bun",
     runtimeEnv: graphigConfig?.runtimeEnv || "Bun",
     readme: readme || "",

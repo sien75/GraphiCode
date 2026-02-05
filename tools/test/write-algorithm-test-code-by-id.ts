@@ -5,6 +5,7 @@ import { mkdir } from "fs/promises";
 import { getTestFileName } from "../_get-file-name-of-env";
 
 const writeAlgorithmTestCodeByIdSchema = z.object({
+  language: z.string().describe("Language (e.g., 'TypeScript')"),
   devEnv: z.string().describe("Development environment (e.g., 'Bun')"),
   runtimeEnv: z
     .enum(["Bun", "Browser"])
@@ -16,6 +17,7 @@ const writeAlgorithmTestCodeByIdSchema = z.object({
 
 // Core function that can be called directly
 export async function writeAlgorithmTestCodeById(
+  language: string,
   devEnv: string,
   runtimeEnv: string,
   workspacePath: string,
@@ -25,7 +27,7 @@ export async function writeAlgorithmTestCodeById(
   const algorithmFolderPath = join(workspacePath, "src", "algorithms", id);
 
   // Get the test file name from config
-  const testFileName = getTestFileName(devEnv, runtimeEnv);
+  const testFileName = getTestFileName(language, devEnv, runtimeEnv);
   const testFilePath = join(algorithmFolderPath, testFileName);
 
   const updatedFiles: string[] = [];
@@ -58,6 +60,9 @@ export async function writeAlgorithmTestCodeById(
 // LangChain tool wrapper
 export const writeAlgorithmTestCodeByIdTool = tool(
   async (input) => {
+    if (!input.language) {
+      throw new Error("language is required");
+    }
     if (!input.devEnv) {
       throw new Error("devEnv is required");
     }
@@ -74,6 +79,7 @@ export const writeAlgorithmTestCodeByIdTool = tool(
       throw new Error("content is required");
     }
     return await writeAlgorithmTestCodeById(
+      input.language,
       input.devEnv,
       input.runtimeEnv,
       input.workspacePath,

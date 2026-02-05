@@ -1,44 +1,43 @@
 {
-  "devEnvs": [
+  "languages": [
     {
-      "name": "Bun",
-      "projectConfig": "package.json",
-      "runtimeEnvs": [
+      "name": "TypeScript",
+      "devEnvs": [
         {
           "name": "Bun",
-          "supportedLanguages": [
-            "TypeScript"
-          ],
-          "testMethods": [
+          "projectConfig": "package.json",
+          "runtimeEnvs": [
             {
-              "name": "BunTestRunner",
-              "command": "bun test {testFile}"
-            }
-          ],
-          "files": {
-            "main": "index.ts",
-            "test": "index.test.ts"
-          }
-        },
-        {
-          "name": "Browser",
-          "supportedLanguages": [
-            "TypeScript"
-          ],
-          "testMethods": [
-            {
-              "name": "BunTestRunner",
-              "command": "bun test {testFile}"
+              "name": "Bun",
+              "testMethods": [
+                {
+                  "name": "BunTestRunner",
+                  "command": "bun test {testFile}"
+                }
+              ],
+              "files": {
+                "main": "index.ts",
+                "test": "index.test.ts"
+              }
             },
             {
-              "name": "Playwright",
-              "command": "bunx playwright-test {testFile}"
+              "name": "Browser",
+              "testMethods": [
+                {
+                  "name": "BunTestRunner",
+                  "command": "bun test {testFile}"
+                },
+                {
+                  "name": "Playwright",
+                  "command": "bunx playwright-test {testFile}"
+                }
+              ],
+              "files": {
+                "main": "index.ts",
+                "test": "index.test.ts"
+              }
             }
-          ],
-          "files": {
-            "main": "index.ts",
-            "test": "index.test.ts"
-          }
+          ]
         }
       ]
     }

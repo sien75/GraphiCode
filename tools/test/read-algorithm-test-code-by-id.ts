@@ -4,6 +4,7 @@ import { join } from "path";
 import { getTestFileName } from "../_get-file-name-of-env";
 
 const readAlgorithmTestCodeByIdSchema = z.object({
+  language: z.string().describe("Language (e.g., 'TypeScript')"),
   devEnv: z.string().describe("Development environment (e.g., 'Bun')"),
   runtimeEnv: z
     .enum(["Bun", "Browser"])
@@ -14,6 +15,7 @@ const readAlgorithmTestCodeByIdSchema = z.object({
 
 // Core function that can be called directly
 export async function readAlgorithmTestCodeById(
+  language: string,
   devEnv: string,
   runtimeEnv: string,
   workspacePath: string,
@@ -22,7 +24,7 @@ export async function readAlgorithmTestCodeById(
   const algorithmFolderPath = join(workspacePath, "src", "algorithms", id);
 
   // Get the test file name from config
-  const testFileName = getTestFileName(devEnv, runtimeEnv);
+  const testFileName = getTestFileName(language, devEnv, runtimeEnv);
   const testFilePath = join(algorithmFolderPath, testFileName);
 
   // Read test file
@@ -40,6 +42,9 @@ export async function readAlgorithmTestCodeById(
 // LangChain tool wrapper
 export const readAlgorithmTestCodeByIdTool = tool(
   async (input) => {
+    if (!input.language) {
+      throw new Error("language is required");
+    }
     if (!input.devEnv) {
       throw new Error("devEnv is required");
     }
@@ -53,6 +58,7 @@ export const readAlgorithmTestCodeByIdTool = tool(
       throw new Error("id is required");
     }
     return await readAlgorithmTestCodeById(
+      input.language,
       input.devEnv,
       input.runtimeEnv,
       input.workspacePath,

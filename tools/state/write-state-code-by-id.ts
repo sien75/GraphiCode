@@ -7,6 +7,7 @@ import { safeReadWrite } from "../_concurrent-write-file";
 import type { StateGraphig, RuntimeEnv } from "types";
 
 const writeStateCodeByIdSchema = z.object({
+  language: z.string().describe("Language (e.g., 'TypeScript')"),
   devEnv: z.string().describe("Development environment (e.g., 'Bun')"),
   runtimeEnv: z
     .enum(["Bun", "Browser"])
@@ -18,6 +19,7 @@ const writeStateCodeByIdSchema = z.object({
 
 // Core function that can be called directly
 export async function writeStateCodeById(
+  language: string,
   devEnv: string,
   runtimeEnv: string,
   workspacePath: string,
@@ -27,7 +29,7 @@ export async function writeStateCodeById(
   const stateFolderPath = join(workspacePath, "src", "states", id);
 
   // Get the main file name from config
-  const mainFileName = getMainFileName(devEnv, runtimeEnv);
+  const mainFileName = getMainFileName(language, devEnv, runtimeEnv);
   const mainFilePath = join(stateFolderPath, mainFileName);
 
   const updatedFiles: string[] = [];
@@ -85,6 +87,9 @@ export async function writeStateCodeById(
 // LangChain tool wrapper
 export const writeStateCodeByIdTool = tool(
   async (input) => {
+    if (!input.language) {
+      throw new Error("language is required");
+    }
     if (!input.devEnv) {
       throw new Error("devEnv is required");
     }
@@ -101,6 +106,7 @@ export const writeStateCodeByIdTool = tool(
       throw new Error("content is required");
     }
     return await writeStateCodeById(
+      input.language,
       input.devEnv,
       input.runtimeEnv,
       input.workspacePath,

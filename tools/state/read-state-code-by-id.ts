@@ -4,6 +4,7 @@ import { join } from "path";
 import { getMainFileName } from "../_get-file-name-of-env";
 
 const readStateCodeByIdSchema = z.object({
+  language: z.string().describe("Language (e.g., 'TypeScript')"),
   devEnv: z.string().describe("Development environment (e.g., 'Bun')"),
   runtimeEnv: z
     .enum(["Bun", "Browser"])
@@ -14,6 +15,7 @@ const readStateCodeByIdSchema = z.object({
 
 // Core function that can be called directly
 export async function readStateCodeById(
+  language: string,
   devEnv: string,
   runtimeEnv: string,
   workspacePath: string,
@@ -22,7 +24,7 @@ export async function readStateCodeById(
   const stateFolderPath = join(workspacePath, "src", "states", id);
 
   // Get the main file name from config
-  const mainFileName = getMainFileName(devEnv, runtimeEnv);
+  const mainFileName = getMainFileName(language, devEnv, runtimeEnv);
   const mainFilePath = join(stateFolderPath, mainFileName);
 
   // Read main file
@@ -40,6 +42,9 @@ export async function readStateCodeById(
 // LangChain tool wrapper
 export const readStateCodeByIdTool = tool(
   async (input) => {
+    if (!input.language) {
+      throw new Error("language is required");
+    }
     if (!input.devEnv) {
       throw new Error("devEnv is required");
     }
@@ -53,6 +58,7 @@ export const readStateCodeByIdTool = tool(
       throw new Error("id is required");
     }
     return await readStateCodeById(
+      input.language,
       input.devEnv,
       input.runtimeEnv,
       input.workspacePath,

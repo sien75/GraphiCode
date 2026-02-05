@@ -1,19 +1,24 @@
 import mainConfig from "../config/main.json";
 
 function getFileName(
+  language: string,
   devEnv: string,
   runtimeEnv: string,
   fileType: string,
   defaultFileName: string
 ): string {
-  for (const devEnvConfig of mainConfig.devEnvs) {
-    if (devEnvConfig.name === devEnv) {
-      const runtimeEnvConfig = devEnvConfig.runtimeEnvs.find(
-        (env: any) => env.name === runtimeEnv
-      );
-      const files = runtimeEnvConfig?.files as any;
-      if (files?.[fileType]) {
-        return files[fileType];
+  for (const languageConfig of mainConfig.languages) {
+    if (languageConfig.name === language) {
+      for (const devEnvConfig of languageConfig.devEnvs) {
+        if (devEnvConfig.name === devEnv) {
+          const runtimeEnvConfig = devEnvConfig.runtimeEnvs.find(
+            (env: any) => env.name === runtimeEnv
+          );
+          const files = runtimeEnvConfig?.files as any;
+          if (files?.[fileType]) {
+            return files[fileType];
+          }
+        }
       }
     }
   }
@@ -22,27 +27,31 @@ function getFileName(
 }
 
 /**
- * Get the main file name for a given dev environment and runtime environment
+ * Get the main file name for a given language, dev environment and runtime environment
+ * @param language Language (e.g., 'TypeScript')
  * @param devEnv Development environment (e.g., 'Bun')
  * @param runtimeEnv Runtime environment (e.g., 'Bun', 'Browser')
  * @returns The main file name (e.g., 'index.ts')
  */
 export function getMainFileName(
+  language: string,
   devEnv: string,
   runtimeEnv: string
 ): string {
-  return getFileName(devEnv, runtimeEnv, "main", "index.ts");
+  return getFileName(language, devEnv, runtimeEnv, "main", "index.ts");
 }
 
 /**
- * Get the test file name for a given dev environment and runtime environment
+ * Get the test file name for a given language, dev environment and runtime environment
+ * @param language Language (e.g., 'TypeScript')
  * @param devEnv Development environment (e.g., 'Bun')
  * @param runtimeEnv Runtime environment (e.g., 'Bun', 'Browser')
  * @returns The test file name (e.g., 'index.test.ts')
  */
 export function getTestFileName(
+  language: string,
   devEnv: string,
   runtimeEnv: string
 ): string {
-  return getFileName(devEnv, runtimeEnv, "test", "index.test.ts");
+  return getFileName(language, devEnv, runtimeEnv, "test", "index.test.ts");
 }

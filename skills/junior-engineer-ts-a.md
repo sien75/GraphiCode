@@ -116,4 +116,4 @@ export default xxx;
 
 ### Others
 
-Remember to respond in the language the user uses.
+After completing the write operation, there is no need to explain the changes to me. Just reply with "mission completed".

@@ -27,6 +27,7 @@ export type RuntimeEnv = "Bun" | "Browser";
 
 export type Graphig = {
   appName: string;
+  language: string;
   devEnv: string;
   runtimeEnv: string;
 };

@@ -7,6 +7,7 @@ import type { RuntimeEnv } from "types";
 import { getTestFileName } from "../_get-file-name-of-env";
 
 const executeStateTestByIdSchema = z.object({
+  language: z.string().describe("Language (e.g., 'TypeScript')"),
   devEnv: z.string().describe("Development environment (e.g., 'Bun')"),
   runtimeEnv: z
     .enum(["Bun", "Browser"])
@@ -23,6 +24,7 @@ const executeStateTestByIdSchema = z.object({
 
 // Core function that can be called directly
 export async function executeStateTestById(
+  language: string,
   devEnv: string,
   runtimeEnv: RuntimeEnv,
   workspacePath: string,
@@ -32,32 +34,35 @@ export async function executeStateTestById(
   const stateFolderPath = join(workspacePath, "src", "states", id);
 
   // Get the test file name from config
-  const testFileName = getTestFileName(devEnv, runtimeEnv);
+  const testFileName = getTestFileName(language, devEnv, runtimeEnv);
   const testFilePath = join(stateFolderPath, testFileName);
 
   // Find the runtime environment configuration
   let testCommand: string | null = null;
 
-  for (const devEnvConfig of mainConfig.devEnvs) {
-    const runtimeEnvConfig = devEnvConfig.runtimeEnvs.find(
-      (env: any) => env.name === runtimeEnv
-    );
+  for (const languageConfig of mainConfig.languages) {
+    if (languageConfig.name !== language) continue;
+    for (const devEnvConfig of languageConfig.devEnvs) {
+      const runtimeEnvConfig = devEnvConfig.runtimeEnvs.find(
+        (env: any) => env.name === runtimeEnv
+      );
 
-    if (runtimeEnvConfig) {
-      // Find the test method
-      let testMethod;
-      if (testMethodName) {
-        testMethod = runtimeEnvConfig.testMethods.find(
-          (method: any) => method.name === testMethodName
-        );
-      } else {
-        // Use the first available test method
-        testMethod = runtimeEnvConfig.testMethods[0];
-      }
+      if (runtimeEnvConfig) {
+        // Find the test method
+        let testMethod;
+        if (testMethodName) {
+          testMethod = runtimeEnvConfig.testMethods.find(
+            (method: any) => method.name === testMethodName
+          );
+        } else {
+          // Use the first available test method
+          testMethod = runtimeEnvConfig.testMethods[0];
+        }
 
-      if (testMethod) {
-        testCommand = testMethod.command;
-        break;
+        if (testMethod) {
+          testCommand = testMethod.command;
+          break;
+        }
       }
     }
   }
@@ -95,6 +100,9 @@ export async function executeStateTestById(
 // LangChain tool wrapper
 export const executeStateTestByIdTool = tool(
   async (input) => {
+    if (!input.language) {
+      throw new Error("language is required");
+    }
     if (!input.devEnv) {
       throw new Error("devEnv is required");
     }
@@ -108,6 +116,7 @@ export const executeStateTestByIdTool = tool(
       throw new Error("id is required");
     }
     return await executeStateTestById(
+      input.language,
       input.devEnv,
       input.runtimeEnv,
       input.workspacePath,

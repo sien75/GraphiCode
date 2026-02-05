@@ -12,9 +12,9 @@ import {
   juniorEngineerModelName_ts_a,
   juniorEngineerTools_ts_a,
   juniorEngineerSkill_ts_a,
-  juniorEngineerModelName_ts_s,
-  juniorEngineerTools_ts_s,
-  juniorEngineerSkill_ts_s,
+  juniorEngineerModelName_ts_s_Bun,
+  juniorEngineerTools_ts_s_Bun,
+  juniorEngineerSkill_ts_s_Bun,
 } from "./junior-engineer";
 
 const AGENT_CONFIGS = {
@@ -28,10 +28,10 @@ const AGENT_CONFIGS = {
     tools: juniorEngineerTools_ts_a,
     skill: juniorEngineerSkill_ts_a,
   },
-  juniorEngineer_ts_s: {
-    modelName: juniorEngineerModelName_ts_s,
-    tools: juniorEngineerTools_ts_s,
-    skill: juniorEngineerSkill_ts_s,
+  juniorEngineer_ts_s_Bun: {
+    modelName: juniorEngineerModelName_ts_s_Bun,
+    tools: juniorEngineerTools_ts_s_Bun,
+    skill: juniorEngineerSkill_ts_s_Bun,
   },
   // testEngineer: {
   //   modelName: testEngineerModelName,
@@ -79,6 +79,7 @@ function createAgentNode(modelName: string, tools: any[], skill: string) {
     // parameters information
     const parametersInfo = `
 IMPORTANT: When calling tools that require parameters, here are the parameters:
+* language: "${state.appInfo?.language}"
 * workspacePath: "${state.workspacePath}"
 * devEnv: "${state.appInfo?.devEnv}"
 * runtimeEnv: "${state.appInfo?.runtimeEnv}"
