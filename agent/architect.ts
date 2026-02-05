@@ -1,3 +1,5 @@
+import ARCHITECT_SKILL from "skills/architect.md" with { type: "text" };
+
 // Algorithm tools
 import { readAllAlgorithmsTool } from "../tools/algorithm/read-all-algorithms";
 import { readAlgorithmReadmeByIdTool } from "../tools/algorithm/read-algorithm-readme-by-id";
@@ -33,4 +35,6 @@ export const architectTools = [
   writeFlowCodeByIdTool,
 ];
 
-export const architectModelName = "google/gemini-3-flash-preview";
+export const architectModelName = "anthropic/claude-sonnet-4.5";
+
+export const architectSkill = ARCHITECT_SKILL;

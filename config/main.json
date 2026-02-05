@@ -7,10 +7,7 @@
         {
           "name": "Bun",
           "supportedLanguages": [
-            "JavaScript",
-            "TypeScript",
-            "JSX",
-            "TSX"
+            "TypeScript"
           ],
           "testMethods": [
             {
@@ -26,10 +23,7 @@
         {
           "name": "Browser",
           "supportedLanguages": [
-            "JavaScript",
-            "TypeScript",
-            "JSX",
-            "TSX"
+            "TypeScript"
           ],
           "testMethods": [
             {

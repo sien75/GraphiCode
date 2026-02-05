@@ -7,20 +7,32 @@ import { ChatOpenAI } from "@langchain/openai";
 import type { AgentState } from "../types";
 import { readAppInfo } from "../tools/app/read-app-info";
 
-import { architectModelName, architectTools } from "./architect";
-import ARCHITECT_SKILL from "skills/architect.md" with { type: "text" };
+import { architectModelName, architectTools, architectSkill } from "./architect";
+import {
+  juniorEngineerModelName_ts_a,
+  juniorEngineerTools_ts_a,
+  juniorEngineerSkill_ts_a,
+  juniorEngineerModelName_ts_s,
+  juniorEngineerTools_ts_s,
+  juniorEngineerSkill_ts_s,
+} from "./junior-engineer";
 
 const AGENT_CONFIGS = {
   architect: {
     modelName: architectModelName,
     tools: architectTools,
-    skill: ARCHITECT_SKILL,
+    skill: architectSkill,
   },
-  // juniorEngineer: {
-  //   modelName: juniorEngineerModelName,
-  //   tools: juniorEngineerTools,
-  //   skill: JUNIOR_ENGINEER_SKILL,
-  // },
+  juniorEngineer_ts_a: {
+    modelName: juniorEngineerModelName_ts_a,
+    tools: juniorEngineerTools_ts_a,
+    skill: juniorEngineerSkill_ts_a,
+  },
+  juniorEngineer_ts_s: {
+    modelName: juniorEngineerModelName_ts_s,
+    tools: juniorEngineerTools_ts_s,
+    skill: juniorEngineerSkill_ts_s,
+  },
   // testEngineer: {
   //   modelName: testEngineerModelName,
   //   tools: testEngineerTools,
