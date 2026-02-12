@@ -4,8 +4,7 @@ import { HumanMessage } from "@langchain/core/messages";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 
-import type { AgentState } from "../types";
-import { readAppInfo } from "../tools/app/read-app-info";
+import type { AgentState, AppInfo } from "../types";
 
 import { architectModelName, architectTools, architectSkill } from "./architect";
 import {
@@ -113,7 +112,8 @@ function createToolsNode(tools: any[]) {
 export async function runAgent(
   workspacePath: string,
   userPrompt: string,
-  agentRole: string = "architect"
+  agentRole: string = "architect",
+  appInfo: AppInfo | null = null
 ) {
   const config = AGENT_CONFIGS[agentRole as keyof typeof AGENT_CONFIGS];
   if (!config) {
@@ -140,7 +140,7 @@ export async function runAgent(
   const initialState: AgentState = {
     messages: [new HumanMessage(userPrompt)],
     workspacePath,
-    appInfo: await readAppInfo(workspacePath),
+    appInfo,
   };
 
   return await app.stream(initialState);

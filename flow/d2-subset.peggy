@@ -56,36 +56,63 @@ majorChainRest
       return [id];
     }
 
-// Minor connection line: without # major prefix
+// Minor connection lines: 3 types
+// 1. subscribe: $state.event -> algorithm
+// 2. pull: &state.readMethod -> algorithm
+// 3. push: algorithm -> @state.writeMethod
+
 minorLine
-  = _ from:minorIdentifier _ op:connectionOp _ to:minorIdentifier [^\n]* newline? {
+  = subscribeLine
+  / pullLine
+  / pushLine
+
+// Subscribe: $state.event -> algorithm
+subscribeLine
+  = _ "$" state:identifier "." event:identifier _ "->" _ algo:identifier [^\n]* newline? {
       return {
         type: 'minor',
         connection: {
-          from: from,
-          to: to,
-          type: op === '->' ? 'push' : 'pull'
+          type: 'subscribe',
+          state: state,
+          event: event,
+          algorithm: algo
         }
       };
     }
 
-// Connection operator
-connectionOp
-  = "->"
-  / "--"
+// Pull: &state.readMethod -> algorithm
+pullLine
+  = _ "&" state:identifier "." method:identifier _ "->" _ algo:identifier [^\n]* newline? {
+      return {
+        type: 'minor',
+        connection: {
+          type: 'pull',
+          state: state,
+          method: method,
+          algorithm: algo
+        }
+      };
+    }
 
-// Identifier (without $)
+// Push: algorithm -> @state.writeMethod
+pushLine
+  = _ algo:identifier _ "->" _ "@" state:identifier "." method:identifier [^\n]* newline? {
+      return {
+        type: 'minor',
+        connection: {
+          type: 'push',
+          algorithm: algo,
+          state: state,
+          method: method
+        }
+      };
+    }
+
+// Identifier
 identifier
-  = chars:[a-zA-Z0-9]+ {
+  = chars:[a-zA-Z0-9_]+ {
       return chars.join('');
     }
-
-// Minor identifier (can include $)
-minorIdentifier
-  = "$" chars:[a-zA-Z0-9]+ {
-      return '$' + chars.join('');
-    }
-  / identifier
 
 // Ignored line (must consume at least one non-newline character)
 ignoredLine
